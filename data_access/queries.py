@@ -1,10 +1,15 @@
 from data_access.db_connection import Database
 from datetime import datetime, timedelta
 import pytz
+import pandas as pd
+
+
 
 def execute_query(query, params=None, fetch="all", commit=False):
     """
     Executes a given SQL query with optional parameters and manages the database connection.
+    Returns the results as a list of dictionaries after transforming them into a pandas DataFrame,
+    with column names corresponding to the SQL table columns.
 
     Parameters:
     - query (str): The SQL query to execute.
@@ -12,14 +17,13 @@ def execute_query(query, params=None, fetch="all", commit=False):
                                 If provided, it should be a tuple or dict of parameters you wish to bind to the query.
     - fetch (str): Determines how the results are fetched post-query execution. Default is "all".
                    Acceptable values are:
-                   - "all": Fetches all rows of a query result. Returns a list of tuples.
-                   - "one": Fetches the first row of a query result. Returns a single tuple.
+                   - "all": Fetches all rows of a query result, returns a list of dictionaries.
+                   - "one": Fetches the first row of a query result, returns a list containing a single dictionary.
     - commit (bool): Specifies whether to commit the transaction. Default is False.
                      If True, the changes made by the query will be committed to the database.
 
     Returns:
-    - On successful execution and fetch="all", returns a list of tuples representing the rows fetched.
-    - On successful execution and fetch="one", returns a single tuple representing the first row fetched.
+    - On successful execution and fetch="all" or fetch="one", returns a list of dictionaries representing the fetched rows.
     - On successful execution with commit=True, returns True.
     - If an exception occurs during query execution, prints the error and returns None.
     """
@@ -30,10 +34,13 @@ def execute_query(query, params=None, fetch="all", commit=False):
             if commit:
                 connection.commit()
                 return True
-            if fetch == "all":
-                return cursor.fetchall()
-            elif fetch == "one":
-                return cursor.fetchone()
+            if fetch in ("all", "one"):
+                rows = cursor.fetchall() if fetch == "all" else [cursor.fetchone()]
+                if not rows or rows[0] is None:  # Check if no data was fetched or fetchone() found no rows
+                    return []  # Return an empty list
+                col_names = [desc[0] for desc in cursor.description]
+                df = pd.DataFrame(rows, columns=col_names)
+                return df.to_dict('records')  # Convert DataFrame to list of dicts
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
@@ -93,7 +100,7 @@ def add_favorite_movie(movie_id: int, email: str):
     );
     """
     
-    email = f'{email}%'
+    email = f'{email}'
     params = (movie_id, email, movie_id, email)
 
     return execute_query(query, params=params, commit=True)
@@ -143,7 +150,7 @@ def get_all_favorites_movies_by_email(email:str):
     SELECT m.*
     FROM movies_favorites as f
     INNER JOIN movies_details as m ON m.movie_id = f.movie_id
-    WHERE f.email l LIKE LOWER(%s);
+    WHERE f.email LIKE LOWER(%s);
     """
 
     email = f'{email}%'
@@ -249,30 +256,31 @@ def update_movies_recommendations(ids: list[int], email: str) -> bool:
     
     # Check for the last recommendation time
     last_recommended_query = """
-    SELECT MAX(timestamp) as last_timestamp
-    FROM movies_favorites
+    SELECT MAX(created_at) as last_timestamp
+    FROM movies_recommendations
     WHERE email = %s;
     """
     params = (email,)
     last_timestamp_result = execute_query(last_recommended_query, params=params, fetch="one")
-    
+    last_timestamp = last_timestamp_result[0]["last_timestamp"]
     minimum_time_to_refresh = timedelta(minutes=1)
-    if last_timestamp_result and last_timestamp_result[0]:
-        last_timestamp = last_timestamp_result[0]
+    if last_timestamp:
         now = datetime.now(pytz.utc)
-        if (now - last_timestamp) <= minimum_time_to_refresh:
+        last_timestamp = last_timestamp.replace(tzinfo=pytz.UTC)
+        diff = (now - last_timestamp)
+        if  diff <= minimum_time_to_refresh:
             print("Last recommendation was made less than 1 minute ago.")
             return False
 
     # Reset current recommendations
-    reset_query = "DELETE FROM movies_favorites WHERE email = %s;"
+    reset_query = "DELETE FROM movies_recommendations WHERE email = %s;"
     params = (email,)
     execute_query(reset_query, params=params, commit=True)
-
-    # Add new recommendations
+   
     values_placeholders = ", ".join(["(%s, %s, CURRENT_TIMESTAMP)"] * len(ids))
-    add_query = f"INSERT INTO movies_favorites (movie_id, email, timestamp) VALUES {values_placeholders};"
-    params = tuple(val for pair in zip([email] * len(ids), ids) for val in pair)
+    add_query = f"INSERT INTO movies_recommendations (movie_id, email, created_at) VALUES {values_placeholders};"
+    params = tuple(val for pair in zip(ids, [email] * len(ids)) for val in pair)
+
     
     return execute_query(add_query, params=params, commit=True)
 

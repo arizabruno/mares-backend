@@ -13,9 +13,8 @@ class Favorites(BaseModel):
     ids: List[int]
 
 class NewFavorite(BaseModel):
-    id_: int
+    movie_id: int
     email: str
-    resource: str
 
 # Application Initialization
 app = FastAPI()
@@ -55,26 +54,34 @@ def generate_movies_recommendations(email: str):
     try:
         # Retrieve favorite movies for the user
         resources = get_all_favorites_movies_by_email(email)
-        favorite_resources_ids = [m['id_'] for m in resources]
+        
+        if resources == None:
+            print("No movies IDs to generate recommendations.")
+            return 
+            
+        favorite_resources_ids = [m['movie_id'] for m in resources]
 
         # Check if there are enough favorite movies to generate recommendations
         if len(favorite_resources_ids) < 2:
-            print("Insufficient resource IDs to generate recommendations.")
+            print("Insufficient movies IDs to generate recommendations.")
             return
 
         # Preprocess favorite movies to summarize user interests
         prep_fav_resources = get_preprocessed_movies_by_ids(favorite_resources_ids)
-        user_interest = get_user_interest_df(prep_fav_resources)
+        df = pd.DataFrame(prep_fav_resources)
+        user_interest = get_user_interest_df(df)
 
         # Use model to find similar users
         similar_users = movies_model.recommend_similar_users(user_interest)
 
         # Get recommendations from similar users' good-rated movies
-        resources_ids_recommendations = get_good_rated_movies_by_user_ids(similar_users)
+        good_rated_movies = get_good_rated_movies_by_user_ids(similar_users)
+        movies_ids_recommendations = [m['movie_id'] for m in good_rated_movies]
 
+        print("!!!", movies_ids_recommendations)
         # Filter out already favorite movies
         favorites_ids_set = set(favorite_resources_ids)
-        recommendations_ids_set = set(resources_ids_recommendations)
+        recommendations_ids_set = set(movies_ids_recommendations)
         final_recommendation_ids = list(recommendations_ids_set - favorites_ids_set)
 
         # Limit the number of recommendations
@@ -167,7 +174,7 @@ async def add_favorite_resource(background_tasks: BackgroundTasks, newFavorite: 
     - HTTPException: If the operation fails, returning a 400 status code with a detailed error message.
     """
 
-    success = add_favorite_movie(newFavorite.id_, newFavorite.email)
+    success = add_favorite_movie(newFavorite.movie_id, newFavorite.email)
     
     if success:
         background_tasks.add_task(generate_movies_recommendations, newFavorite.email)
@@ -234,7 +241,7 @@ async def reset_user_favorites_and_recommendations(username: str = Query(default
     
       
 @app.get("/favorites")
-async def read_favorite_movies(username: str = Query(default=""), domain: str = Query(default="gmail")) -> List[Movie]:
+async def read_favorite_movies(username: str = Query(default=""), domain: str = Query(default="gmail")):
     """
     Retrieves all favorite movies for a user based on their email address.
 
