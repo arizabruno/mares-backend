@@ -159,7 +159,7 @@ def get_all_favorites_movies_by_email(email:str):
     return execute_query(query, params, commit=False)
 
 
-def delete_all_favorite_movies_by_email(movie_id: int, email: str):
+def delete_all_favorite_movies_by_email(email: str):
     """
     Deletes all favorite movies for a specific user identified by their email address.
 
@@ -175,7 +175,7 @@ def delete_all_favorite_movies_by_email(movie_id: int, email: str):
     """
 
     email = f'{email}%'
-    params = (movie_id, email)
+    params = (email,)
 
     return execute_query(query, params=params, commit=True)
 
@@ -313,7 +313,7 @@ def get_random_movies_recommendations_from_user_by_email(email:str):
     return execute_query(query, params=params, commit=False)
 
 
-def delete_all_movies_recommendations_by_email(movie_id: int, email: str):
+def delete_all_movies_recommendations_by_email(email: str):
     """
     Deletes all recommended movies for a specific user identified by their email address.
 
@@ -329,6 +329,6 @@ def delete_all_movies_recommendations_by_email(movie_id: int, email: str):
     """
 
     email = f'{email}%'
-    params = (movie_id, email)
+    params = (email,)
 
     return execute_query(query, params=params, commit=True)
