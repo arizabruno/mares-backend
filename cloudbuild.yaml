@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/le-wagon-march2024/test_mares_api', '-f', 'docker/Dockerfile', '.']
+images:
+- 'gcr.io/le-wagon-march2024/test_mares_api'

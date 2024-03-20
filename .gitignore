@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+.DS_Store
+.python-version
+gcp-credentials.json
+raw_data/
+*.pkl
