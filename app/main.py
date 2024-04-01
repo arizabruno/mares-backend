@@ -76,6 +76,10 @@ def generate_movies_recommendations(email: str):
 
         # Get recommendations from similar users' good-rated movies
         good_rated_movies = get_good_rated_movies_by_user_ids(similar_users)
+        
+        if not good_rated_movies or len(good_rated_movies) < 1:
+            return
+        
         movies_ids_recommendations = [m['movie_id'] for m in good_rated_movies]
 
         print("!!!", movies_ids_recommendations)
