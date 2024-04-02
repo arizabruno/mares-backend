@@ -48,7 +48,7 @@ def execute_query(query, params=None, fetch="all", commit=False):
         Database.return_connection(connection)
 
 
-def search_movie_by_title(title: str, page_size: int = 20, offset: int = 0) -> list:
+def search_movie_by_title(title: str = "", page_size: int = 20, offset: int = 0) -> list:
     """
     Searches for movies by title in the database, using a case-insensitive search pattern.
     
@@ -131,7 +131,7 @@ def delete_favorite_movie(movie_id: int, email: str):
     return execute_query(query, params=params, commit=True)
 
 
-def get_all_favorites_movies_by_email(email:str):
+def get_all_favorites_movies_by_email(email:str, title: str = "", page_size: int = 20, offset: int = 0):
     """
     Retrieves detailed information about all favorite movies for a specified user by email.
 
@@ -150,11 +150,13 @@ def get_all_favorites_movies_by_email(email:str):
     SELECT m.*
     FROM movies_favorites as f
     INNER JOIN movies_details as m ON m.movie_id = f.movie_id
-    WHERE f.email LIKE LOWER(%s);
+    WHERE f.email LIKE LOWER(%s) AND LOWER(title) LIKE LOWER(%s)
+    LIMIT %s OFFSET %s;
     """
 
     email = f'{email}%'
-    params = (email,)
+    title = f'%{title}%'
+    params = (email, title, page_size, offset)
     
     return execute_query(query, params, commit=False)
 
@@ -299,11 +301,13 @@ def get_random_movies_recommendations_from_user_by_email(email:str):
     """
     
     query = """
-    SELECT DISTINCT m.*
-    FROM movies_recommendations AS r
-    INNER JOIN movies_details AS m ON r.movie_id = m.movie_id
-    WHERE r.email LIKE LOWER(%s)
-    ORDER BY RAND()
+    SELECT * FROM (
+        SELECT DISTINCT m.*
+        FROM movies_recommendations AS r
+        INNER JOIN movies_details AS m ON r.movie_id = m.movie_id
+        WHERE r.email LIKE LOWER(%s)
+    ) AS subquery
+    ORDER BY RANDOM()
     LIMIT 10;
     """
     

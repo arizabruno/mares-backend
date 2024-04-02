@@ -112,7 +112,7 @@ async def main():
     return RedirectResponse(url="/docs")
 
 
-@app.get("/recommend")
+@app.get("/movies_recommendation")
 async def recommend_resources(username: str = Query(default=""), domain: str = Query(default="gmail")) -> list:
     """
     Endpoint to generate and fetch movie recommendations for a user based on their email.
@@ -135,7 +135,7 @@ async def recommend_resources(username: str = Query(default=""), domain: str = Q
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/search")
+@app.get("/search_movies")
 async def search_resources(title: str = Query(default=""), page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1)) -> list:
     """
     Searches for movies by their title with pagination support.
@@ -162,7 +162,7 @@ async def search_resources(title: str = Query(default=""), page: int = Query(def
 
 
 
-@app.post("/favorites")
+@app.post("/favorite_movies")
 async def add_favorite_resource(background_tasks: BackgroundTasks, newFavorite: NewFavorite) -> NewFavorite:
     """
     Adds a new favorite movie for a user and triggers background generation of new movie recommendations.
@@ -188,7 +188,7 @@ async def add_favorite_resource(background_tasks: BackgroundTasks, newFavorite: 
 
       
       
-@app.delete("/favorites")
+@app.delete("/favorite_movies")
 async def delete_favorite_resource(background_tasks: BackgroundTasks, username: str = Query(default=""), domain: str = Query(default="gmail"), movie_id: int = Query()):
     """
     Removes a movie from a user's favorites based on the movie ID and updates their recommendations.
@@ -215,7 +215,7 @@ async def delete_favorite_resource(background_tasks: BackgroundTasks, username: 
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the movie from favorites")
 
-@app.delete("/reset_favorites")
+@app.delete("/reset_favorite_movies")
 async def reset_user_favorites_and_recommendations(username: str = Query(default=""), domain: str = Query(default="gmail")) -> dict:
     """
     Deletes all favorite movies and recommendations for a user, identified by their email address.
@@ -244,8 +244,8 @@ async def reset_user_favorites_and_recommendations(username: str = Query(default
         raise HTTPException(status_code=400, detail="Failed to delete the user's favorites")
     
       
-@app.get("/favorites")
-async def read_favorite_movies(username: str = Query(default=""), domain: str = Query(default="gmail")):
+@app.get("/favorite_movies")
+async def read_favorite_movies(username: str = Query(default=""), domain: str = Query(default="gmail"), title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1), ):
     """
     Retrieves all favorite movies for a user based on their email address.
 
@@ -258,7 +258,7 @@ async def read_favorite_movies(username: str = Query(default=""), domain: str = 
     """
     email = f"{username}@{domain}"
         
-    movies = get_all_favorites_movies_by_email(email)
+    movies = get_all_favorites_movies_by_email(email, title, page_size, page)
     
     if not movies:
         raise HTTPException(status_code=404, detail=f"No favorite movies found for {email}.")
