@@ -153,6 +153,7 @@ def get_all_favorites_movies_by_email(email:str, title: str = "", page_size: int
     WHERE f.email LIKE LOWER(%s) AND LOWER(title) LIKE LOWER(%s)
     LIMIT %s OFFSET %s;
     """
+    
 
     email = f'{email}%'
     title = f'%{title}%'

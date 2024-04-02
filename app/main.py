@@ -245,7 +245,7 @@ async def reset_user_favorites_and_recommendations(username: str = Query(default
     
       
 @app.get("/favorite_movies")
-async def read_favorite_movies(username: str = Query(default=""), domain: str = Query(default="gmail"), title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1), ):
+async def read_favorite_movies(username: str = Query(default=""), domain: str = Query(default="gmail"), title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1)):
     """
     Retrieves all favorite movies for a user based on their email address.
 
@@ -257,8 +257,9 @@ async def read_favorite_movies(username: str = Query(default=""), domain: str = 
     - A list of Movie models representing the user's favorite movies.
     """
     email = f"{username}@{domain}"
-        
-    movies = get_all_favorites_movies_by_email(email, title, page_size, page)
+    offset = (page - 1) * page_size 
+
+    movies = get_all_favorites_movies_by_email(email, title, page_size, offset)
     
     if not movies:
         raise HTTPException(status_code=404, detail=f"No favorite movies found for {email}.")
