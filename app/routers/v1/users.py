@@ -17,7 +17,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.post("", response_description="Create a new user", response_model=UserCreate)
+@router.post("", response_description="Create a new user", response_model=bool)
 async def create_user_endpoint(user: UserCreate):
     """
     Create a new user with email, username, full name, and hashed password.
@@ -25,9 +25,9 @@ async def create_user_endpoint(user: UserCreate):
     result = create_user(user.email, user.username, user.password)
     if not result:
         raise HTTPException(status_code=400, detail="User could not be created.")
-    return user
+    return result
 
-@router.get("", response_description="Read all users")
+@router.get("", response_description="Read all users",  response_model=List[User])
 async def read_all_users_endpoint():
     """
     Read and return all users.
@@ -37,7 +37,7 @@ async def read_all_users_endpoint():
         raise HTTPException(status_code=404, detail="No users found.")
     return users
 
-@router.get("/{user_id}", response_description="Read a user by ID")
+@router.get("/{user_id}", response_description="Read a user by ID", response_model=UserInfo)
 async def read_user_by_id_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int):
     """
     Read and return a user by their ID.
@@ -57,7 +57,7 @@ async def read_user_by_id_endpoint(token: Annotated[str, Depends(oauth2_scheme)]
         raise HTTPException(status_code=404, detail="User not found.")
     return user
 
-@router.put("/{user_id}", response_description="Update a user's information")
+@router.put("/{user_id}", response_description="Update a user's information", response_model=bool)
 async def update_user_info_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int, user: UserUpdate):
     """
     Update a user's email, username, full name, or hashed password.
@@ -76,9 +76,9 @@ async def update_user_info_endpoint(token: Annotated[str, Depends(oauth2_scheme)
     success = update_user_info(user_id, user.new_email, user.new_username, user.password)
     if not success:
         raise HTTPException(status_code=400, detail="User update failed.")
-    return {"message": "User updated successfully."}
+    return True
 
-@router.delete("/{user_id}", response_description="Delete a user")
+@router.delete("/{user_id}", response_description="Delete a user", response_model=bool)
 async def delete_user_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int):
     """
     Delete a user by their ID.
@@ -97,4 +97,4 @@ async def delete_user_endpoint(token: Annotated[str, Depends(oauth2_scheme)], us
     if not success:
         raise HTTPException(status_code=400, detail="User deletion failed.")
     
-    return {"message": "User deleted successfully."}
+    return True

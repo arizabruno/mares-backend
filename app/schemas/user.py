@@ -29,6 +29,18 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
 
 
+class UserInfo(BaseModel):
+    """
+    Schema representing the basic info of a user entity.
+
+    Attributes:
+        username (str): The user's username. Unique across all users.
+        email (EmailStr): The user's email address. Must be a valid email format.
+    """
+    username: str
+    email: EmailStr
+
+    
 class User(BaseModel):
     """
     Schema representing a user entity.
@@ -40,5 +52,5 @@ class User(BaseModel):
         email (EmailStr): The user's email address. Must be a valid email format.
     """
     username: str
-    hashed_password: Optional[str] = None
+    hashed_password: str 
     email: EmailStr

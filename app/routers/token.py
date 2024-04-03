@@ -1,4 +1,3 @@
-from typing import Annotated
 from fastapi import Depends, APIRouter, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from app.auth.logic import authenticate_user, create_access_token
