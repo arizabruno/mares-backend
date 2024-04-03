@@ -17,7 +17,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.post("/users/", response_description="Create a new user", response_model=UserCreate)
+@router.post("/", response_description="Create a new user", response_model=UserCreate)
 async def create_user_endpoint(user: UserCreate):
     """
     Create a new user with email, username, full name, and hashed password.
@@ -27,7 +27,7 @@ async def create_user_endpoint(user: UserCreate):
         raise HTTPException(status_code=400, detail="User could not be created.")
     return user
 
-@router.get("/users/", response_description="Read all users")
+@router.get("/", response_description="Read all users")
 async def read_all_users_endpoint():
     """
     Read and return all users.
@@ -37,7 +37,7 @@ async def read_all_users_endpoint():
         raise HTTPException(status_code=404, detail="No users found.")
     return users
 
-@router.get("/users/{user_id}", response_description="Read a user by ID")
+@router.get("/{user_id}", response_description="Read a user by ID")
 async def read_user_by_id_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int):
     """
     Read and return a user by their ID.
@@ -57,7 +57,7 @@ async def read_user_by_id_endpoint(token: Annotated[str, Depends(oauth2_scheme)]
         raise HTTPException(status_code=404, detail="User not found.")
     return user
 
-@router.put("/users/{user_id}", response_description="Update a user's information")
+@router.put("/{user_id}", response_description="Update a user's information")
 async def update_user_info_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int, user: UserUpdate):
     """
     Update a user's email, username, full name, or hashed password.
@@ -78,7 +78,7 @@ async def update_user_info_endpoint(token: Annotated[str, Depends(oauth2_scheme)
         raise HTTPException(status_code=400, detail="User update failed.")
     return {"message": "User updated successfully."}
 
-@router.delete("/users/{user_id}", response_description="Delete a user")
+@router.delete("/{user_id}", response_description="Delete a user")
 async def delete_user_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int):
     """
     Delete a user by their ID.

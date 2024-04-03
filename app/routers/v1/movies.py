@@ -1,8 +1,7 @@
-from typing import Annotated, List
+from typing import Annotated
 from fastapi import BackgroundTasks, Depends, APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
-from app.auth.logic import get_current_user
 from app.schemas.user import *
 from app.schemas.movie import *
 from app.data_access.queries import *
@@ -101,7 +100,7 @@ async def main():
     return RedirectResponse(url="/docs")
 
 
-@router.get("/movies_recommendation")
+@router.get("/recommendation")
 async def recommend_resources(token: Annotated[str, Depends(oauth2_scheme)], username: str = Query(default=""), domain: str = Query(default="gmail")) -> list:
     """
     Endpoint to generate and fetch movie recommendations for a user based on their email.
@@ -125,7 +124,7 @@ async def recommend_resources(token: Annotated[str, Depends(oauth2_scheme)], use
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/search_movies")
+@router.get("/search")
 async def search_resources(token: Annotated[str, Depends(oauth2_scheme)], title: str = Query(default=""), page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1)) -> list:
     """
     Searches for movies by their title with pagination support.
@@ -153,7 +152,7 @@ async def search_resources(token: Annotated[str, Depends(oauth2_scheme)], title:
 
 
 
-@router.post("/favorite_movies")
+@router.post("/favorite")
 async def add_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], background_tasks: BackgroundTasks, newFavorite: NewFavorite) -> NewFavorite:
     """
     Adds a new favorite movie for a user and triggers background generation of new movie recommendations.
@@ -180,7 +179,7 @@ async def add_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], b
 
       
       
-@router.delete("/favorite_movies")
+@router.delete("/favorite")
 async def delete_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], background_tasks: BackgroundTasks, username: str = Query(default=""), domain: str = Query(default="gmail"), movie_id: int = Query()):
     """
     Removes a movie from a user's favorites based on the movie ID and updates their recommendations.
@@ -208,7 +207,7 @@ async def delete_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)]
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the movie from favorites")
 
-@router.delete("/reset_favorite_movies")
+@router.delete("/reset_favorite")
 async def reset_user_favorites_and_recommendations(token: Annotated[str, Depends(oauth2_scheme)], username: str = Query(default=""), domain: str = Query(default="gmail")) -> dict:
     """
     Deletes all favorite movies and recommendations for a user, identified by their email address.
@@ -238,7 +237,7 @@ async def reset_user_favorites_and_recommendations(token: Annotated[str, Depends
         raise HTTPException(status_code=400, detail="Failed to delete the user's favorites")
     
       
-@router.get("/favorite_movies")
+@router.get("/favorite")
 async def read_favorite_movies(token: Annotated[str, Depends(oauth2_scheme)], username: str = Query(default=""), domain: str = Query(default="gmail"), title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1)):
     """
     Retrieves all favorite movies for a user based on their email address.
@@ -262,25 +261,3 @@ async def read_favorite_movies(token: Annotated[str, Depends(oauth2_scheme)], us
         raise HTTPException(status_code=404, detail=f"No favorite movies found for {email}.")
     return movies
 
-
-@router.post("/users/", response_description="Create a new user", response_model=UserCreate)
-async def create_user_endpoint(user: UserCreate):
-    """
-    Create a new user with email, username, full name, and hashed password.
-    """
-    result = create_user(user.email, user.username, user.password)
-    if not result:
-        raise HTTPException(status_code=400, detail="User could not be created.")
-    return user
-
-@router.get("/users/", response_description="Read all users")
-async def read_all_users_endpoint():
-    """
-    Read and return all users.
-    """
-    users = read_all_users()
-    if users is None:
-        raise HTTPException(status_code=404, detail="No users found.")
-    return users
-
-    
