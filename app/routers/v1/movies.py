@@ -88,19 +88,7 @@ def generate_movies_recommendations(email: str):
         # Handle unexpected errors
         raise HTTPException(status_code=500, detail="An error occurred during the recommendation process.")
 
-
-@router.get("")
-async def main():
-    """
-    Redirects to the API documentation page.
-
-    Returns:
-    - RedirectResponse: Redirects the client to the API documentation.
-    """
-    return RedirectResponse(url="/docs")
-
-
-@router.get("/recommendation")
+@router.get("/recommendation", response_model=List[MovieDetails])
 async def recommend_resources(token: Annotated[str, Depends(oauth2_scheme)], username: str = Query(default=""), domain: str = Query(default="gmail")) -> list:
     """
     Endpoint to generate and fetch movie recommendations for a user based on their email.
@@ -124,7 +112,7 @@ async def recommend_resources(token: Annotated[str, Depends(oauth2_scheme)], use
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/search")
+@router.get("/search", response_model=List[MovieDetails])
 async def search_resources(token: Annotated[str, Depends(oauth2_scheme)], title: str = Query(default=""), page: int = Query(default=1, ge=1), page_size: int = Query(default=20, ge=1)) -> list:
     """
     Searches for movies by their title with pagination support.
@@ -150,9 +138,7 @@ async def search_resources(token: Annotated[str, Depends(oauth2_scheme)], title:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-@router.post("/favorite")
+@router.post("/favorite", response_model=bool)
 async def add_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], background_tasks: BackgroundTasks, newFavorite: NewFavorite) -> NewFavorite:
     """
     Adds a new favorite movie for a user and triggers background generation of new movie recommendations.
@@ -163,7 +149,7 @@ async def add_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], b
     - newFavorite (NewFavorite): The new favorite movie information, including its ID and the user's email.
 
     Returns:
-    - NewFavorite: The added favorite movie information if successful.
+    - bool: The outcome of the operation
 
     Raises:
     - HTTPException: If the operation fails, returning a 400 status code with a detailed error message.
@@ -173,13 +159,11 @@ async def add_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], b
     
     if success:
         background_tasks.add_task(generate_movies_recommendations, newFavorite.email)
-        return newFavorite
+        return True
     else:
         raise HTTPException(status_code=400, detail="Failed to add the movies to favorites")
-
       
-      
-@router.delete("/favorite")
+@router.delete("/favorite", response_model=bool)
 async def delete_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)], background_tasks: BackgroundTasks, username: str = Query(default=""), domain: str = Query(default="gmail"), movie_id: int = Query()):
     """
     Removes a movie from a user's favorites based on the movie ID and updates their recommendations.
@@ -192,7 +176,7 @@ async def delete_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)]
     - movie_id (int): The unique identifier of the movie to be removed from favorites.
 
     Returns:
-    - dict: A message indicating the outcome of the operation.
+    - bool: The outcome of the operation
 
     Raises:
     - HTTPException: If the operation to remove the favorite fails.
@@ -203,11 +187,11 @@ async def delete_favorite_resource(token: Annotated[str, Depends(oauth2_scheme)]
     
     if success:
         background_tasks.add_task(generate_movies_recommendations, email)
-        return {"detail": "Successfully deleted the movie from favorites"}
+        return True
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the movie from favorites")
 
-@router.delete("/reset_favorite")
+@router.delete("/reset_favorite", response_model=bool)
 async def reset_user_favorites_and_recommendations(token: Annotated[str, Depends(oauth2_scheme)], username: str = Query(default=""), domain: str = Query(default="gmail")) -> dict:
     """
     Deletes all favorite movies and recommendations for a user, identified by their email address.
@@ -218,7 +202,7 @@ async def reset_user_favorites_and_recommendations(token: Annotated[str, Depends
     - domain (str): The domain part of the user's email, defaults to "gmail".
 
     Returns:
-    - dict: A message indicating the outcome of the operation.
+    - bool: The outcome of the operation
 
     Raises:
     - HTTPException: If the operation to reset the user's favorites and recommendations fails.
@@ -230,14 +214,13 @@ async def reset_user_favorites_and_recommendations(token: Annotated[str, Depends
     if success_favorites:
         success_recommendations = delete_all_movies_recommendations_by_email(email)
         if success_recommendations:
-            return {"detail": "Successfully deleted the user's favorites and recommendations"}
+            return True
         else:
             raise HTTPException(status_code=400, detail="Failed to delete the user's recommendations")
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the user's favorites")
-    
-      
-@router.get("/favorite")
+       
+@router.get("/favorite", response_model=List[MovieDetails])
 async def read_favorite_movies(token: Annotated[str, Depends(oauth2_scheme)], username: str = Query(default=""), domain: str = Query(default="gmail"), title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1)):
     """
     Retrieves all favorite movies for a user based on their email address.

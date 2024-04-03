@@ -20,3 +20,18 @@ class NewFavorite(BaseModel):
     """
     movie_id: int
     email: str
+    
+    
+class MovieDetails(BaseModel):
+    movie_id: int
+    title: str
+    image_path: str
+    year: int
+    avg_rating: float
+    rating_count: int
+    genres: str
+    summary: str
+    duration: int
+    popularity_score: float
+    tmdb_id: int
+    imdb_id: int

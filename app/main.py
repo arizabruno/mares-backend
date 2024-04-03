@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from app.data_access.queries import *
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -17,6 +18,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 # Application Initialization
 app = FastAPI()
 
+@app.get("")
+async def main():
+    """
+    Redirects to the API documentation page.
+
+    Returns:
+    - RedirectResponse: Redirects the client to the API documentation.
+    """
+    return RedirectResponse(url="/docs")
 
 # CORS Configuration
 origins = ["*"]
