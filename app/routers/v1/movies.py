@@ -89,7 +89,7 @@ def generate_movies_recommendations(email: str):
         raise HTTPException(status_code=500, detail="An error occurred during the recommendation process.")
 
 
-@router.get("/")
+@router.get("")
 async def main():
     """
     Redirects to the API documentation page.
