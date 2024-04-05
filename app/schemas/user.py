@@ -34,9 +34,11 @@ class UserInfo(BaseModel):
     Schema representing the basic info of a user entity.
 
     Attributes:
+        user_id (int): The user's id.
         username (str): The user's username. Unique across all users.
         email (EmailStr): The user's email address. Must be a valid email format.
     """
+    user_id: int
     username: str
     email: EmailStr
 
@@ -46,11 +48,13 @@ class User(BaseModel):
     Schema representing a user entity.
 
     Attributes:
+        user_id (int): The user's id.
         username (str): The user's username. Unique across all users.
         hashed_password (Optional[str]): The user's hashed password. Defaults to None.
             This field is optional to accommodate scenarios where user data is returned without exposing password information.
         email (EmailStr): The user's email address. Must be a valid email format.
     """
+    user_id: int
     username: str
     hashed_password: str 
     email: EmailStr

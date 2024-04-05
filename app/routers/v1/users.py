@@ -17,7 +17,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.post("", response_description="Create a new user", response_model=bool)
+@router.post("/", response_description="Create a new user", response_model=bool)
 async def create_user_endpoint(user: UserCreate):
     """
     Create a new user with email, username, full name, and hashed password.
@@ -27,7 +27,7 @@ async def create_user_endpoint(user: UserCreate):
         raise HTTPException(status_code=400, detail="User could not be created.")
     return result
 
-@router.get("", response_description="Read all users",  response_model=List[User])
+@router.get("/", response_description="Read all users",  response_model=List[UserInfo])
 async def read_all_users_endpoint():
     """
     Read and return all users.
@@ -73,7 +73,7 @@ async def update_user_info_endpoint(token: Annotated[str, Depends(oauth2_scheme)
     Raises:
     - HTTPException: If the operation fails.
     """
-    success = update_user_info(user_id, user.new_email, user.new_username, user.password)
+    success = update_user_info(user_id, user.email, user.username, user.password)
     if not success:
         raise HTTPException(status_code=400, detail="User update failed.")
     return True

@@ -18,7 +18,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.post("", response_model=Token)
+@router.post("/", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()) -> Token:
     """
     OAuth2 token endpoint that issues access tokens to users upon successful authentication.
@@ -41,7 +41,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"user":{"id":user.user_id, "username":user.username, "email":user.email}}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
     

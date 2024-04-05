@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 
 from app.schemas.token import TokenData
-from app.schemas.user import User
+from app.schemas.user import UserInfo, User
 from app.data_access.queries import *
 from app.auth.password import oauth2_scheme, verify_password
 
@@ -34,7 +34,7 @@ def get_user(username: str) -> Optional[User]:
     return User(**user)
 
 
-def authenticate_user(username: str, password: str) -> Optional[User]:
+def authenticate_user(username: str, password: str) -> Optional[UserInfo]:
     """
     Authenticate a user by verifying their username and password.
 
@@ -43,7 +43,7 @@ def authenticate_user(username: str, password: str) -> Optional[User]:
         password (str): The password of the user to authenticate.
 
     Returns:
-        Optional[User]: The authenticated user object if authentication is successful, False otherwise.
+        Optional[UserInfo]: The authenticated user object if authentication is successful, False otherwise.
     """
     user = get_user(username)
 
@@ -69,7 +69,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInfo:
     """
     Validate an access token and retrieve the user associated with the token.
 
@@ -89,7 +89,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        username: str = payload.get("user")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)

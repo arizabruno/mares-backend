@@ -4,7 +4,6 @@ from app.data_access.queries import *
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
-from app.routers import v1
 from app.routers.v1 import movies as v1_movies_routes
 from app.routers.v1 import users as v1_users_routes
 from app.routers import token as token_routes
@@ -18,7 +17,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 # Application Initialization
 app = FastAPI()
 
-@app.get("")
+@app.get("/")
 async def main():
     """
     Redirects to the API documentation page.

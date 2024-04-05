@@ -366,7 +366,7 @@ def read_all_users():
     Returns:
     - The result of the `execute_query` function, which is a list of dictionaries where each dictionary represents a user without their hashed password.
     """
-    query = "SELECT id, email, username FROM users"
+    query = "SELECT user_id, email, username FROM users"
     return execute_query(query, fetch="all")
 
 
@@ -380,7 +380,7 @@ def read_user_by_id(user_id: int):
     Returns:
     - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
     """
-    query = "SELECT id, email, username FROM users WHERE id = %s"
+    query = "SELECT user_id, email, username FROM users WHERE user_id = %s"
     params = (user_id,)
     return execute_query(query, params=params, fetch="one")[0]
 
@@ -416,7 +416,7 @@ def update_user_info(user_id: int, new_email: str = None, new_username: str = No
         return None  # No updates to make
     
     params.append(user_id)  # For the WHERE clause
-    query = "UPDATE users SET " + ", ".join(updates) + " WHERE id = %s"
+    query = "UPDATE users SET " + ", ".join(updates) + " WHERE user_id = %s"
     
     return execute_query(query, params=params, commit=True)
 
@@ -431,7 +431,7 @@ def delete_user(user_id: int):
     Returns:
     - The result of the `execute_query` function, which could be True if the operation was successful and the transaction was committed, or None if an error occurred.
     """
-    query = "DELETE FROM users WHERE id = %s"
+    query = "DELETE FROM users WHERE user_id = %s"
     params = (user_id,)
     return execute_query(query, params=params, commit=True)
 
@@ -446,6 +446,6 @@ def read_user_by_username(username: str):
     Returns:
     - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
     """
-    query = "SELECT id, email, username, hashed_password FROM users WHERE username = %s"
+    query = "SELECT user_id, email, username, hashed_password FROM users WHERE username = %s"
     params = (username,)
     return execute_query(query, params=params, fetch="one")[0]
