@@ -22,4 +22,3 @@ def get_user_interest_df(prep_resources):
     return df
 
 
-
