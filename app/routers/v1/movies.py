@@ -76,7 +76,6 @@ def generate_movies_recommendations(email: str):
         
         movies_ids_recommendations = [m['movie_id'] for m in good_rated_movies]
 
-        print("!!!", movies_ids_recommendations)
         # Filter out already favorite movies
         favorites_ids_set = set(favorite_resources_ids)
         recommendations_ids_set = set(movies_ids_recommendations)

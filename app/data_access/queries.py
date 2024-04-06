@@ -446,6 +446,7 @@ def read_user_by_username(username: str):
     Returns:
     - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
     """
+    print("username",username)
     query = "SELECT user_id, email, username, hashed_password FROM users WHERE username = %s"
     params = (username,)
     return execute_query(query, params=params, fetch="one")[0]

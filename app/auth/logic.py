@@ -66,7 +66,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta if expires_delta else timedelta(minutes=15))
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    print("EXPIRE",expire.strftime("%Y-%m-%d %H:%M:%S"))
+    print("PAYLOAD",to_encode)
+    print("TOKEN", token)
+    
+    return token
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInfo:
@@ -82,6 +87,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     Raises:
         HTTPException: If token validation fails or the user cannot be found.
     """
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -94,6 +100,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
             raise credentials_exception
         token_data = TokenData(username=username)
     except JWTError as error:
+        print("JWT Error",error)
         raise credentials_exception
 
     user = read_user_by_username(token_data.username)
