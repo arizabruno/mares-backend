@@ -131,7 +131,6 @@ async def search_resources(current_user: Annotated[UserInfo, Depends(get_current
     - A list of movies that match the search criteria, with pagination applied. Each movie is represented as a dictionary of details.
     """
     current_user = UserInfo(**current_user)
-
     offset = (page - 1) * page_size 
 
     try:
