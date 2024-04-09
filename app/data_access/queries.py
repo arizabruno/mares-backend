@@ -80,13 +80,13 @@ def search_movie_by_title(title: str = "", page_size: int = 20, offset: int = 0)
     return execute_query(query, params=params)
 
 
-def add_favorite_movie(movie_id: int, email: str):
+def add_favorite_movie(movie_id: int, user_id: int):
     """
     Adds a movie to a user's list of favorite movies in the database, if it's not already in the list.
 
     Parameters:
     - movie_id (int): The unique identifier of the movie to add to the user's favorites.
-    - email (str): The email address of the user, used to identify their list of favorite movies.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
 
     Returns:
     - True if the transaction was committed successfully, indicating that the movie was added to the favorites.
@@ -94,27 +94,26 @@ def add_favorite_movie(movie_id: int, email: str):
     """
 
     query = """
-    INSERT INTO movies_favorites (movie_id, email, created_at)
+    INSERT INTO movies_favorites (movie_id, user_id, created_at)
     SELECT %s, %s, CURRENT_TIMESTAMP
     WHERE NOT EXISTS (
-        SELECT 1 FROM movies_favorites WHERE movie_id = %s AND LOWER(email) = LOWER(%s)
+        SELECT 1 FROM movies_favorites WHERE movie_id = %s AND user_id = %s
     );
     """
 
-    email = f'{email}'
-    params = (movie_id, email, movie_id, email)
+    params = (movie_id, user_id, movie_id, user_id)
 
     return execute_query(query, params=params, commit=True)
 
 
-def delete_favorite_movie(movie_id: int, email: str):
+def delete_favorite_movie(movie_id: int, user_id: int):
     """
     Removes a movie from a user's list of favorite movies in the database.
 
     Parameters:
     - movie_id (int): The unique identifier of the movie to be removed from the user's favorites.
-    - email (str): The email address of the user, used to identify their list of favorite movies. The comparison
-                   with this value is case-insensitive.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
+
 
     Returns:
     - True if the transaction was committed successfully, indicating that the movie was removed from the favorites.
@@ -123,22 +122,21 @@ def delete_favorite_movie(movie_id: int, email: str):
     """
 
     query = """
-    DELETE FROM movies_favorites WHERE movie_id = (%s) AND email LIKE LOWER(%s);
+    DELETE FROM movies_favorites WHERE movie_id = %s AND user_id = %s;
     """
 
-    email = f'{email}%'
-    params = (movie_id, email)
+    params = (movie_id, user_id)
 
     return execute_query(query, params=params, commit=True)
 
 
-def get_all_favorites_movies_by_email(email:str, title: str = "", page_size: int = 20, offset: int = 0):
+def get_all_favorites_movies_by_user(user_id:int, title: str = "", page_size: int = 20, offset: int = 0):
     """
-    Retrieves detailed information about all favorite movies for a specified user by email.
+    Retrieves detailed information about all favorite movies for a specified user by id.
 
     Parameters:
-    - email (str): The email address of the user whose favorite movies are to be retrieved.
-                   This is used to filter the records in the 'movies_favorites' table.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
+
 
     Returns:
     - list: A list of tuples representing the detailed information of each favorite movie. Each tuple corresponds
@@ -151,35 +149,33 @@ def get_all_favorites_movies_by_email(email:str, title: str = "", page_size: int
     SELECT m.*
     FROM movies_favorites as f
     INNER JOIN movies_details as m ON m.movie_id = f.movie_id
-    WHERE f.email LIKE LOWER(%s) AND LOWER(title) LIKE LOWER(%s)
+    WHERE f.user_id = %s AND LOWER(title) LIKE LOWER(%s)
     LIMIT %s OFFSET %s;
     """
 
-    email = f'{email}%'
     title = f'%{title}%'
-    params = (email, title, page_size, offset)
+    params = (user_id, title, page_size, offset)
     print("params",params)
 
     return execute_query(query, params, commit=False)
 
 
-def delete_all_favorite_movies_by_email(email: str):
+def delete_all_favorite_movies(user_id: int):
     """
-    Deletes all favorite movies for a specific user identified by their email address.
+    Deletes all favorite movies for a specific user identified by their id
 
     Parameters:
-    - email (str): The email address of the user whose favorite movies are to be deleted.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
 
     Returns:
     - The result of the `execute_query` function, which could be True if the operation was successful and the transaction was committed, or None if an error occurred.
     """
 
     query = """
-    DELETE FROM movies_favorites WHERE email LIKE LOWER(%s);
+    DELETE FROM movies_favorites WHERE user_id = %s;
     """
 
-    email = f'{email}%'
-    params = (email,)
+    params = (user_id,)
 
     return execute_query(query, params=params, commit=True)
 
@@ -243,37 +239,36 @@ def get_good_rated_movies_by_user_ids(ids: list[int]) -> list:
     return execute_query(query, params=params, commit=False)
 
 
-# Reset movies recommendations by email
-def reset_movies_recommendations(email: str):
+def reset_movies_recommendations(user_id: int):
     """
-    Deletes all movie recommendations for a specific user identified by their email address.
+    Deletes all movie recommendations for a specific user identified by their id.
 
     Parameters:
-    - email (str): The email address of the user whose movie recommendations are to be reset.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
 
     Returns:
     - The result of the `execute_query` function, which could be True if the operation was successful and the transaction was committed, or None if an error occurred.
     """
 
     query = """
-    DELETE FROM movies_recommendations WHERE email = %s;
+    DELETE FROM movies_recommendations WHERE user_id = %s;
     """
 
-    params = (email,)
+    params = (user_id,)
 
     return execute_query(query, params=params, commit=True)
 
 
-def update_movies_recommendations(ids: list[int], email: str) -> bool:
+def update_movies_recommendations(ids: list[int], user_id: int) -> bool:
     """
-    Updates the movie recommendations for a user, identified by email, if the last update was more than a specified time ago.
+    Updates the movie recommendations for a user, identified by id, if the last update was more than a specified time ago.
 
     The function clears the user's current movie recommendations and sets new ones based on the provided movie IDs.
     It first checks if the last recommendation update was more than 1 minute ago to prevent too frequent updates.
 
     Parameters:
     - ids (list[int]): A list of movie IDs to be set as the new recommendations for the user.
-    - email (str): The email address of the user whose movie recommendations are to be updated.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
 
     Returns:
     - bool: True if the recommendations were successfully updated, False otherwise (e.g., if the update was attempted too soon after the last one).
@@ -283,9 +278,9 @@ def update_movies_recommendations(ids: list[int], email: str) -> bool:
     # last_recommended_query = """
     # SELECT MAX(created_at) as last_timestamp
     # FROM movies_recommendations
-    # WHERE email = %s;
+    # WHERE user_id = %s;
     # """
-    # params = (email,)
+    # params = (user_id,)
     # last_timestamp_result = execute_query(last_recommended_query, params=params, fetch="one")
     # last_timestamp = last_timestamp_result[0]["last_timestamp"]
     # minimum_time_to_refresh = timedelta(minutes=1)
@@ -298,23 +293,23 @@ def update_movies_recommendations(ids: list[int], email: str) -> bool:
     #         return False
 
     # Reset current recommendations
-    reset_movies_recommendations(email)
+    reset_movies_recommendations(user_id)
 
     values_placeholders = ", ".join(["(%s, %s, CURRENT_TIMESTAMP)"] * len(ids))
-    add_query = f"INSERT INTO movies_recommendations (movie_id, email, created_at) VALUES {values_placeholders};"
-    params = tuple(val for pair in zip(ids, [email] * len(ids)) for val in pair)
+    add_query = f"INSERT INTO movies_recommendations (movie_id, user_id, created_at) VALUES {values_placeholders};"
+    params = tuple(val for pair in zip(ids, [user_id] * len(ids)) for val in pair)
 
 
     return execute_query(add_query, params=params, commit=True)
 
 
-def get_random_movies_recommendations_from_user_by_email(email:str):
+def get_random_movies_recommendations_from_user(user_id: int):
     """
-    Fetches a random list of 10 movie recommendations for a specific user by their email.
+    Fetches a random list of 10 movie recommendations for a specific user by their id.
 
     Parameters:
-    - email (str): The email address of the user whose recommendations are to be retrieved.
-                   The search is case-insensitive and allows for partial matches.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
+
 
     Returns:
     - list: A list of tuples, where each tuple represents the detailed information of a recommended movie.
@@ -326,35 +321,33 @@ def get_random_movies_recommendations_from_user_by_email(email:str):
         SELECT DISTINCT m.*
         FROM movies_recommendations AS r
         INNER JOIN movies_details AS m ON r.movie_id = m.movie_id
-        WHERE r.email LIKE LOWER(%s)
+        WHERE r.user_id = %s
     ) AS subquery
     ORDER BY RANDOM()
     LIMIT 10;
     """
 
-    email = f'{email}%'
-    params = (email,)
+    params = (user_id,)
 
     return execute_query(query, params=params, commit=False)
 
 
-def delete_all_movies_recommendations_by_email(email: str):
+def delete_all_movies_recommendations(user_id: int):
     """
-    Deletes all recommended movies for a specific user identified by their email address.
+    Deletes all recommended movies for a specific user identified by their id.
 
     Parameters:
-    - email (str): The email address of the user whose recommended movies are to be deleted.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
 
     Returns:
     - The result of the `execute_query` function, which could be True if the operation was successful and the transaction was committed, or None if an error occurred.
     """
 
     query = """
-    DELETE FROM movies_recommendations WHERE email LIKE LOWER(%s);
+    DELETE FROM movies_recommendations WHERE user_id = %s;
     """
 
-    email = f'{email}%'
-    params = (email,)
+    params = (user_id,)
 
     return execute_query(query, params=params, commit=True)
 

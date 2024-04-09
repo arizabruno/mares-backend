@@ -34,12 +34,12 @@ except Exception as e:
     raise SystemExit
 
 
-def generate_movies_recommendations(email: str):
+def generate_movies_recommendations(user_id: int):
     """
     Generates and updates movie recommendations for a user based on their favorite movies.
 
     Parameters:
-    - email (str): The email of the user for whom to generate recommendations.
+    - user_id (int): The id of the user, used to identify their list of favorite movies.
 
     Raises:
     - HTTPException: If there's an error in fetching the favorites, if the favorites list is too short,
@@ -47,7 +47,7 @@ def generate_movies_recommendations(email: str):
     """
     try:
         # Retrieve favorite movies for the user
-        resources = get_all_favorites_movies_by_email(email)
+        resources = get_all_favorites_movies_by_user(user_id)
 
         if resources == None:
             print("No movies IDs to generate recommendations.")
@@ -58,7 +58,7 @@ def generate_movies_recommendations(email: str):
         # Check if there are enough favorite movies to generate recommendations
         if len(favorite_resources_ids) < 1:
             print("Insufficient movies IDs to generate recommendations.")
-            reset_movies_recommendations(email)
+            reset_movies_recommendations(user_id)
             return
 
         # Preprocess favorite movies to summarize user interests
@@ -88,7 +88,7 @@ def generate_movies_recommendations(email: str):
             final_recommendation_ids = final_recommendation_ids[:MAX_RECS]
 
         # Update user recommendations
-        update_movies_recommendations(final_recommendation_ids, email)
+        update_movies_recommendations(final_recommendation_ids, user_id)
 
     except Exception as e:
         # Handle unexpected errors
@@ -97,8 +97,7 @@ def generate_movies_recommendations(email: str):
 @router.get("/recommendation", response_model=List[MovieDetails])
 async def recommend_resources(current_user: Annotated[UserInfo, Depends(get_current_user)]) -> list:
     """
-    Endpoint to generate and fetch movie recommendations for a user based on their email.
-    Constructs the user's email from the provided username and domain, then fetches a list of random movie recommendations.
+    Endpoint to generate and fetch movie recommendations for a user based on their id.
 
     Parameters:
     - current_user (Annotated[str, Depends(get_current_user)]): The current user extracted from the request JWT.
@@ -107,10 +106,10 @@ async def recommend_resources(current_user: Annotated[UserInfo, Depends(get_curr
     - A list of dictionaries, each representing a movie recommendation with details fetched from the database.
     """
     current_user = UserInfo(**current_user)
-    generate_movies_recommendations(current_user.email)
+    generate_movies_recommendations(current_user.user_id)
 
     try:
-        recs = get_random_movies_recommendations_from_user_by_email(current_user.email)
+        recs = get_random_movies_recommendations_from_user(current_user.user_id)
         if not recs:
             raise HTTPException(status_code=404, detail="No recommendations found for the specified user.")
         return recs
@@ -161,10 +160,10 @@ async def add_favorite_resource(current_user: Annotated[UserInfo, Depends(get_cu
     """
 
     current_user = UserInfo(**current_user)
-    success = add_favorite_movie(movie_id, current_user.email)
+    success = add_favorite_movie(movie_id, current_user.user_id)
 
     if success:
-        # background_tasks.add_task(generate_movies_recommendations, current_user.email)
+        # background_tasks.add_task(generate_movies_recommendations, current_user.user_id)
         return True
     else:
         raise HTTPException(status_code=400, detail="Failed to add the movies to favorites")
@@ -187,10 +186,10 @@ async def delete_favorite_resource(current_user: Annotated[UserInfo, Depends(get
     """
 
     current_user = UserInfo(**current_user)
-    success = delete_favorite_movie(movie_id, current_user.email)
+    success = delete_favorite_movie(movie_id, current_user.user_id)
 
     if success:
-        # background_tasks.add_task(generate_movies_recommendations, current_user.email)
+        # background_tasks.add_task(generate_movies_recommendations, current_user.user_id)
         return True
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the movie from favorites")
@@ -198,7 +197,7 @@ async def delete_favorite_resource(current_user: Annotated[UserInfo, Depends(get
 @router.delete("/reset_favorite", response_model=bool)
 async def reset_user_favorites_and_recommendations(current_user: Annotated[UserInfo, Depends(get_current_user)]) -> dict:
     """
-    Deletes all favorite movies and recommendations for a user, identified by their email address.
+    Deletes all favorite movies and recommendations for a user, identified by their id.
 
     Parameters:
     - current_user (Annotated[str, Depends(get_current_user)]): The current user extracted from the request JWT.
@@ -211,10 +210,10 @@ async def reset_user_favorites_and_recommendations(current_user: Annotated[UserI
     """
 
     current_user = UserInfo(**current_user)
-    success_favorites = delete_all_favorite_movies_by_email(current_user.email)
+    success_favorites = delete_all_favorite_movies(current_user.user_id)
 
     if success_favorites:
-        success_recommendations = delete_all_movies_recommendations_by_email(current_user.email)
+        success_recommendations = delete_all_movies_recommendations(current_user.user_id)
         if success_recommendations:
             return True
         else:
@@ -225,7 +224,7 @@ async def reset_user_favorites_and_recommendations(current_user: Annotated[UserI
 @router.get("/favorite", response_model=List[MovieDetails])
 async def read_favorite_movies(current_user: Annotated[UserInfo, Depends(get_current_user)], title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1)):
     """
-    Retrieves all favorite movies for a user based on their email address.
+    Retrieves all favorite movies for a user based on their id.
 
     Parameters:
     - current_user (Annotated[str, Depends(get_current_user)]): The current user extracted from the request JWT.
@@ -243,8 +242,8 @@ async def read_favorite_movies(current_user: Annotated[UserInfo, Depends(get_cur
 
     title = title.strip() if title.isspace() else title
 
-    movies = get_all_favorites_movies_by_email(current_user.email, title, page_size, offset)
+    movies = get_all_favorites_movies_by_user(current_user.user_id, title, page_size, offset)
 
     if not movies:
-        raise HTTPException(status_code=404, detail=f"No favorite movies found for {current_user.email}.")
+        raise HTTPException(status_code=404, detail=f"No favorite movies found for {current_user.user_id}.")
     return movies
