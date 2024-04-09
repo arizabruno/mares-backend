@@ -52,7 +52,7 @@ def execute_query(query, params=None, fetch="all", commit=False):
 def search_movie_by_title(title: str = "", page_size: int = 20, offset: int = 0) -> list:
     """
     Searches for movies by title in the database, using a case-insensitive search pattern.
-    
+
     Parameters:
     - title (str): The search term for the movie title. The function searches for any titles that contain this term,
                    regardless of case.
@@ -74,16 +74,16 @@ def search_movie_by_title(title: str = "", page_size: int = 20, offset: int = 0)
       appropriate columns to store movie details.
     """
     query = "SELECT DISTINCT * FROM movies_details WHERE LOWER(title) LIKE LOWER(%s) LIMIT %s OFFSET %s;"
-    
+
     params = (f'%{title}%', page_size, offset)
-    
+
     return execute_query(query, params=params)
 
 
 def add_favorite_movie(movie_id: int, email: str):
     """
     Adds a movie to a user's list of favorite movies in the database, if it's not already in the list.
-    
+
     Parameters:
     - movie_id (int): The unique identifier of the movie to add to the user's favorites.
     - email (str): The email address of the user, used to identify their list of favorite movies.
@@ -92,7 +92,7 @@ def add_favorite_movie(movie_id: int, email: str):
     - True if the transaction was committed successfully, indicating that the movie was added to the favorites.
     - None if an error occurred during the query execution or if the movie is already in the user's list of favorites.
     """
-    
+
     query = """
     INSERT INTO movies_favorites (movie_id, email, created_at)
     SELECT %s, %s, CURRENT_TIMESTAMP
@@ -100,7 +100,7 @@ def add_favorite_movie(movie_id: int, email: str):
         SELECT 1 FROM movies_favorites WHERE movie_id = %s AND LOWER(email) = LOWER(%s)
     );
     """
-    
+
     email = f'{email}'
     params = (movie_id, email, movie_id, email)
 
@@ -146,7 +146,7 @@ def get_all_favorites_movies_by_email(email:str, title: str = "", page_size: int
                 The function returns an empty list if the user has no favorite movies or in case of an error.
 
     """
-    
+
     query = """
     SELECT m.*
     FROM movies_favorites as f
@@ -154,12 +154,12 @@ def get_all_favorites_movies_by_email(email:str, title: str = "", page_size: int
     WHERE f.email LIKE LOWER(%s) AND LOWER(title) LIKE LOWER(%s)
     LIMIT %s OFFSET %s;
     """
-    
 
     email = f'{email}%'
     title = f'%{title}%'
     params = (email, title, page_size, offset)
-    
+    print("params",params)
+
     return execute_query(query, params, commit=False)
 
 
@@ -196,11 +196,11 @@ def get_preprocessed_movies_by_ids(ids: list[int]) -> list:
             all columns from the 'movies_preprocessed' table for each movie that matches the IDs in the given list.
             Returns an empty list if no movies are found or in case of an error.
     """
-    
+
     placeholders = ', '.join(['%s'] * len(ids))
-    
+
     query = f"SELECT DISTINCT * FROM movies_preprocessed WHERE movie_id IN ({placeholders})"
-    
+
     params = tuple(ids)
 
     return execute_query(query, params=params, commit=False)
@@ -211,12 +211,12 @@ def get_all_users_interests() -> list:
     Retrieves all entries from the 'movies_users_interests' table.
 
     Returns:
-    - list: A list of tuples, where each tuple represents a row from the 'movies_users_interests' table, 
+    - list: A list of tuples, where each tuple represents a row from the 'movies_users_interests' table,
             containing all the data for each entry. Returns an empty list if the table is empty or in case of an error.
     """
-    
+
     query = f"SELECT * from movies_users_interests;"
-    
+
     return execute_query(query, commit=False)
 
 
@@ -233,14 +233,35 @@ def get_good_rated_movies_by_user_ids(ids: list[int]) -> list:
     """
     # Generate a list of placeholders for the query based on the number of user IDs
     placeholders = ', '.join(['%s'] * len(ids))
-    
+
     # Construct the SQL query
     query = f"SELECT DISTINCT movie_id FROM movies_ratings WHERE user_id IN ({placeholders}) and rating > 4.0"
-    
+
     # Execute the query with the list of user IDs
     params = tuple(ids)
 
     return execute_query(query, params=params, commit=False)
+
+
+# Reset movies recommendations by email
+def reset_movies_recommendations(email: str):
+    """
+    Deletes all movie recommendations for a specific user identified by their email address.
+
+    Parameters:
+    - email (str): The email address of the user whose movie recommendations are to be reset.
+
+    Returns:
+    - The result of the `execute_query` function, which could be True if the operation was successful and the transaction was committed, or None if an error occurred.
+    """
+
+    query = """
+    DELETE FROM movies_recommendations WHERE email = %s;
+    """
+
+    params = (email,)
+
+    return execute_query(query, params=params, commit=True)
 
 
 def update_movies_recommendations(ids: list[int], email: str) -> bool:
@@ -257,35 +278,33 @@ def update_movies_recommendations(ids: list[int], email: str) -> bool:
     Returns:
     - bool: True if the recommendations were successfully updated, False otherwise (e.g., if the update was attempted too soon after the last one).
     """
-    
+
     # Check for the last recommendation time
-    last_recommended_query = """
-    SELECT MAX(created_at) as last_timestamp
-    FROM movies_recommendations
-    WHERE email = %s;
-    """
-    params = (email,)
-    last_timestamp_result = execute_query(last_recommended_query, params=params, fetch="one")
-    last_timestamp = last_timestamp_result[0]["last_timestamp"]
-    minimum_time_to_refresh = timedelta(minutes=1)
-    if last_timestamp:
-        now = datetime.now(pytz.utc)
-        last_timestamp = last_timestamp.replace(tzinfo=pytz.UTC)
-        diff = (now - last_timestamp)
-        if  diff <= minimum_time_to_refresh:
-            print("Last recommendation was made less than 1 minute ago.")
-            return False
+    # last_recommended_query = """
+    # SELECT MAX(created_at) as last_timestamp
+    # FROM movies_recommendations
+    # WHERE email = %s;
+    # """
+    # params = (email,)
+    # last_timestamp_result = execute_query(last_recommended_query, params=params, fetch="one")
+    # last_timestamp = last_timestamp_result[0]["last_timestamp"]
+    # minimum_time_to_refresh = timedelta(minutes=1)
+    # if last_timestamp:
+    #     now = datetime.now(pytz.utc)
+    #     last_timestamp = last_timestamp.replace(tzinfo=pytz.UTC)
+    #     diff = (now - last_timestamp)
+    #     if  diff <= minimum_time_to_refresh:
+    #         print("Last recommendation was made less than 1 minute ago.")
+    #         return False
 
     # Reset current recommendations
-    reset_query = "DELETE FROM movies_recommendations WHERE email = %s;"
-    params = (email,)
-    execute_query(reset_query, params=params, commit=True)
-   
+    reset_movies_recommendations(email)
+
     values_placeholders = ", ".join(["(%s, %s, CURRENT_TIMESTAMP)"] * len(ids))
     add_query = f"INSERT INTO movies_recommendations (movie_id, email, created_at) VALUES {values_placeholders};"
     params = tuple(val for pair in zip(ids, [email] * len(ids)) for val in pair)
 
-    
+
     return execute_query(add_query, params=params, commit=True)
 
 
@@ -301,7 +320,7 @@ def get_random_movies_recommendations_from_user_by_email(email:str):
     - list: A list of tuples, where each tuple represents the detailed information of a recommended movie.
             Returns an empty list if no recommendations are found or in case of an error.
     """
-    
+
     query = """
     SELECT * FROM (
         SELECT DISTINCT m.*
@@ -312,7 +331,7 @@ def get_random_movies_recommendations_from_user_by_email(email:str):
     ORDER BY RANDOM()
     LIMIT 10;
     """
-    
+
     email = f'{email}%'
     params = (email,)
 
@@ -400,7 +419,7 @@ def update_user_info(user_id: int, new_email: str = None, new_username: str = No
     """
     updates = []
     params = []
-    
+
     if new_email:
         updates.append("email = %s")
         params.append(new_email)
@@ -411,13 +430,13 @@ def update_user_info(user_id: int, new_email: str = None, new_username: str = No
         new_hashed_password = get_password_hash(new_password)
         updates.append("hashed_password = %s")
         params.append(new_hashed_password)
-    
+
     if not updates:
         return None  # No updates to make
-    
+
     params.append(user_id)  # For the WHERE clause
     query = "UPDATE users SET " + ", ".join(updates) + " WHERE user_id = %s"
-    
+
     return execute_query(query, params=params, commit=True)
 
 
@@ -449,4 +468,18 @@ def read_user_by_username(username: str):
     print("username",username)
     query = "SELECT user_id, email, username, hashed_password FROM users WHERE username = %s"
     params = (username,)
+    return execute_query(query, params=params, fetch="one")[0]
+
+def read_user_by_email(email: str):
+    """
+    Fetches a single user from the users table by their email.
+
+    Parameters:
+    - email (str): The email of the user to fetch.
+
+    Returns:
+    - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
+    """
+    query = "SELECT user_id, email, username, hashed_password FROM users WHERE email = %s"
+    params = (email,)
     return execute_query(query, params=params, fetch="one")[0]

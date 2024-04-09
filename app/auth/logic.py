@@ -70,7 +70,28 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     print("EXPIRE",expire.strftime("%Y-%m-%d %H:%M:%S"))
     print("PAYLOAD",to_encode)
     print("TOKEN", token)
-    
+
+    return token
+
+def create_reset_password_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create a JWT access token for resetting the user's password.
+
+    Args:
+        data (dict): The payload to encode in the JWT token.
+        expires_delta (Optional[timedelta]): The lifespan of the token. Defaults to 15 minutes if None.
+
+    Returns:
+        str: The encoded JWT token as a string.
+    """
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta if expires_delta else timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    print("EXPIRE",expire.strftime("%Y-%m-%d %H:%M:%S"))
+    print("PAYLOAD",to_encode)
+    print("TOKEN", token)
+
     return token
 
 
@@ -104,8 +125,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         raise credentials_exception
 
     user = read_user_by_username(token_data.username)
-    
+
     if user is None:
         raise credentials_exception
     return user
-

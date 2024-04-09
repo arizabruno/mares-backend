@@ -48,16 +48,17 @@ def generate_movies_recommendations(email: str):
     try:
         # Retrieve favorite movies for the user
         resources = get_all_favorites_movies_by_email(email)
-        
+
         if resources == None:
             print("No movies IDs to generate recommendations.")
-            return 
-            
+            return
+
         favorite_resources_ids = [m['movie_id'] for m in resources]
 
         # Check if there are enough favorite movies to generate recommendations
-        if len(favorite_resources_ids) < 2:
+        if len(favorite_resources_ids) < 1:
             print("Insufficient movies IDs to generate recommendations.")
+            reset_movies_recommendations(email)
             return
 
         # Preprocess favorite movies to summarize user interests
@@ -70,10 +71,10 @@ def generate_movies_recommendations(email: str):
 
         # Get recommendations from similar users' good-rated movies
         good_rated_movies = get_good_rated_movies_by_user_ids(similar_users)
-        
+
         if not good_rated_movies or len(good_rated_movies) < 1:
             return
-        
+
         movies_ids_recommendations = [m['movie_id'] for m in good_rated_movies]
 
         # Filter out already favorite movies
@@ -106,6 +107,7 @@ async def recommend_resources(current_user: Annotated[UserInfo, Depends(get_curr
     - A list of dictionaries, each representing a movie recommendation with details fetched from the database.
     """
     current_user = UserInfo(**current_user)
+    generate_movies_recommendations(current_user.email)
 
     try:
         recs = get_random_movies_recommendations_from_user_by_email(current_user.email)
@@ -130,10 +132,10 @@ async def search_resources(current_user: Annotated[UserInfo, Depends(get_current
     - A list of movies that match the search criteria, with pagination applied. Each movie is represented as a dictionary of details.
     """
     current_user = UserInfo(**current_user)
-    offset = (page - 1) * page_size 
+    offset = (page - 1) * page_size
 
     try:
-
+        title = title.strip() if title.isspace() else title
         resources = search_movie_by_title(title, page_size, offset)
         if not resources:
             return []
@@ -157,16 +159,16 @@ async def add_favorite_resource(current_user: Annotated[UserInfo, Depends(get_cu
     Raises:
     - HTTPException: If the operation fails, returning a 400 status code with a detailed error message.
     """
-    
+
     current_user = UserInfo(**current_user)
     success = add_favorite_movie(movie_id, current_user.email)
 
     if success:
-        background_tasks.add_task(generate_movies_recommendations, current_user.email)
+        # background_tasks.add_task(generate_movies_recommendations, current_user.email)
         return True
     else:
         raise HTTPException(status_code=400, detail="Failed to add the movies to favorites")
-      
+
 @router.delete("/favorite", response_model=bool)
 async def delete_favorite_resource(current_user: Annotated[UserInfo, Depends(get_current_user)],  background_tasks: BackgroundTasks, movie_id: int = Query()):
     """
@@ -183,12 +185,12 @@ async def delete_favorite_resource(current_user: Annotated[UserInfo, Depends(get
     Raises:
     - HTTPException: If the operation to remove the favorite fails.
     """
-    
-    current_user = UserInfo(**current_user)     
+
+    current_user = UserInfo(**current_user)
     success = delete_favorite_movie(movie_id, current_user.email)
-    
+
     if success:
-        background_tasks.add_task(generate_movies_recommendations, current_user.email)
+        # background_tasks.add_task(generate_movies_recommendations, current_user.email)
         return True
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the movie from favorites")
@@ -207,10 +209,10 @@ async def reset_user_favorites_and_recommendations(current_user: Annotated[UserI
     Raises:
     - HTTPException: If the operation to reset the user's favorites and recommendations fails.
     """
-    
+
     current_user = UserInfo(**current_user)
     success_favorites = delete_all_favorite_movies_by_email(current_user.email)
-    
+
     if success_favorites:
         success_recommendations = delete_all_movies_recommendations_by_email(current_user.email)
         if success_recommendations:
@@ -219,7 +221,7 @@ async def reset_user_favorites_and_recommendations(current_user: Annotated[UserI
             raise HTTPException(status_code=400, detail="Failed to delete the user's recommendations")
     else:
         raise HTTPException(status_code=400, detail="Failed to delete the user's favorites")
-       
+
 @router.get("/favorite", response_model=List[MovieDetails])
 async def read_favorite_movies(current_user: Annotated[UserInfo, Depends(get_current_user)], title: str = Query(default=""), page_size: int = Query(default=20, ge=1),  page: int = Query(default=1, ge=1)):
     """
@@ -231,17 +233,18 @@ async def read_favorite_movies(current_user: Annotated[UserInfo, Depends(get_cur
 
     Returns:
     - A list of Movie models representing the user's favorite movies.
-    
+
     Raises:
     - HTTPException: If the operation fails.
     """
     current_user = UserInfo(**current_user)
-        
-    offset = (page - 1) * page_size 
+
+    offset = (page - 1) * page_size
+
+    title = title.strip() if title.isspace() else title
 
     movies = get_all_favorites_movies_by_email(current_user.email, title, page_size, offset)
 
     if not movies:
         raise HTTPException(status_code=404, detail=f"No favorite movies found for {current_user.email}.")
     return movies
-
