@@ -19,18 +19,18 @@ class NewFavorite(BaseModel):
         email (str): The email address of the user adding the movie to their list of favorites. This links the action to a specific user account.
     """
     movie_id: int
-    
-    
+
+
 class MovieDetails(BaseModel):
     movie_id: int
     title: str
-    image_path: str
-    year: int
-    avg_rating: float
-    rating_count: int
-    genres: str
-    summary: str
-    duration: int
-    popularity_score: float
-    tmdb_id: int
-    imdb_id: int
+    image_path: str | None
+    year: int | None
+    avg_rating: float | None
+    rating_count: int | None
+    genres: str | None
+    summary: str | None
+    duration: int | None
+    popularity_score: float | None
+    tmdb_id: int | None
+    imdb_id: int | None

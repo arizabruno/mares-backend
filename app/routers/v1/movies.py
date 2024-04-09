@@ -50,14 +50,12 @@ def generate_movies_recommendations(user_id: int):
         resources = get_all_favorites_movies_by_user(user_id)
 
         if resources == None:
-            print("No movies IDs to generate recommendations.")
             return
 
         favorite_resources_ids = [m['movie_id'] for m in resources]
 
         # Check if there are enough favorite movies to generate recommendations
         if len(favorite_resources_ids) < 1:
-            print("Insufficient movies IDs to generate recommendations.")
             reset_movies_recommendations(user_id)
             return
 
@@ -244,6 +242,4 @@ async def read_favorite_movies(current_user: Annotated[UserInfo, Depends(get_cur
 
     movies = get_all_favorites_movies_by_user(current_user.user_id, title, page_size, offset)
 
-    if not movies:
-        raise HTTPException(status_code=404, detail=f"No favorite movies found for {current_user.user_id}.")
     return movies

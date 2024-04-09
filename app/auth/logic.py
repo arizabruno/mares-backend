@@ -67,10 +67,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     expire = datetime.now(timezone.utc) + (expires_delta if expires_delta else timedelta(minutes=15))
     to_encode.update({"exp": expire})
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    print("EXPIRE",expire.strftime("%Y-%m-%d %H:%M:%S"))
-    print("PAYLOAD",to_encode)
-    print("TOKEN", token)
-
     return token
 
 def create_reset_password_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -88,9 +84,6 @@ def create_reset_password_token(data: dict, expires_delta: Optional[timedelta] =
     expire = datetime.now(timezone.utc) + (expires_delta if expires_delta else timedelta(minutes=15))
     to_encode.update({"exp": expire})
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    print("EXPIRE",expire.strftime("%Y-%m-%d %H:%M:%S"))
-    print("PAYLOAD",to_encode)
-    print("TOKEN", token)
 
     return token
 
