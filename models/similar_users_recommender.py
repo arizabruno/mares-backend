@@ -10,8 +10,8 @@ class SimilarUsersRecommenders:
         self.model.fit(X)
 
     def recommend_similar_users(self, user_interests_df, k = 5):
-        
+
         distances, indices = self.model.kneighbors(user_interests_df, n_neighbors=k)
         similar_users = self.all_users_interests_df.loc[indices[0]].userId.tolist()
-        
+
         return similar_users

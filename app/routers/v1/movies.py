@@ -50,14 +50,15 @@ def generate_movies_recommendations(user_id: int):
         resources = get_all_favorites_movies_by_user(user_id)
 
         if resources == None:
-            return
+            return []
 
         favorite_resources_ids = [m['movie_id'] for m in resources]
+
 
         # Check if there are enough favorite movies to generate recommendations
         if len(favorite_resources_ids) < 1:
             reset_movies_recommendations(user_id)
-            return
+            return []
 
         # Preprocess favorite movies to summarize user interests
         prep_fav_resources = get_preprocessed_movies_by_ids(favorite_resources_ids)
@@ -65,13 +66,26 @@ def generate_movies_recommendations(user_id: int):
         user_interest = get_user_interest_df(df)
 
         # Use model to find similar users
-        similar_users = movies_model.recommend_similar_users(user_interest)
+        ks_attempts = [5,10,15,20]
 
-        # Get recommendations from similar users' good-rated movies
-        good_rated_movies = get_good_rated_movies_by_user_ids(similar_users)
+        good_rated_movies = []
 
-        if not good_rated_movies or len(good_rated_movies) < 1:
-            return
+        MINIMUM_RECOMMENDATIONS = 20
+
+        for k in ks_attempts:
+            similar_users = movies_model.recommend_similar_users(user_interest, k)
+
+            # Get recommendations from similar users' good-rated movies
+
+            recs = get_good_rated_movies_by_user_ids(similar_users)
+
+            if(len(recs) >= MINIMUM_RECOMMENDATIONS):
+                good_rated_movies = recs
+                break
+
+        if not good_rated_movies or len(good_rated_movies) < MINIMUM_RECOMMENDATIONS:
+            reset_movies_recommendations(user_id)
+            return []
 
         movies_ids_recommendations = [m['movie_id'] for m in good_rated_movies]
 
@@ -107,9 +121,7 @@ async def recommend_resources(current_user: Annotated[UserInfo, Depends(get_curr
     generate_movies_recommendations(current_user.user_id)
 
     try:
-        recs = get_random_movies_recommendations_from_user(current_user.user_id)
-        if not recs:
-            raise HTTPException(status_code=404, detail="No recommendations found for the specified user.")
+        recs = get_all_movies_recommendation(current_user.user_id)
         return recs
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

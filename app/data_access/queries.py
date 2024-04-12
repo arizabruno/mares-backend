@@ -136,7 +136,7 @@ def delete_favorite_movie(movie_id: int, user_id: int):
     return execute_query(query, params=params, commit=True)
 
 
-def get_all_favorites_movies_by_user(user_id:int, title: str = "", page_size: int = 20, offset: int = 0):
+def get_all_favorites_movies_by_user(user_id:int, title: str = "", page_size: int = 10, offset: int = 0):
     """
     Retrieves detailed information about all favorite movies for a specified user by id.
 
@@ -236,13 +236,38 @@ def get_good_rated_movies_by_user_ids(ids: list[int]) -> list:
     placeholders = ', '.join(['%s'] * len(ids))
 
     # Construct the SQL query
-    query = f"SELECT DISTINCT movie_id FROM movies_ratings WHERE user_id IN ({placeholders}) and rating > 4.0"
+    query = f"SELECT DISTINCT movie_id FROM movies_ratings WHERE user_id IN ({placeholders}) and rating >= 4.0"
 
     # Execute the query with the list of user IDs
     params = tuple(ids)
 
     return execute_query(query, params=params, commit=False)
 
+def get_all_movies_recommendation(user_id: int) -> list:
+    """
+    Get all movies recommendations for a user.
+
+    Parameters:
+    - user_id (int): The user ID for whom to exclude favorite movies.
+
+    Returns:
+    - list: A list of tuples representing the movie records.
+    """
+
+    query = """
+    SELECT DISTINCT * FROM (
+        SELECT m.*
+        FROM movies_recommendations AS r
+        INNER JOIN movies_details AS m ON r.movie_id = m.movie_id
+        WHERE r.user_id = %s
+        ORDER BY RANDOM()
+        LIMIT 50
+    ) AS subquery
+    ORDER BY title ASC;
+    """
+    params = (user_id,)
+
+    return execute_query(query, params=params)
 
 def reset_movies_recommendations(user_id: int):
     """
@@ -299,7 +324,6 @@ def update_movies_recommendations(ids: list[int], user_id: int) -> bool:
 
     # Reset current recommendations
     reset_movies_recommendations(user_id)
-
     values_placeholders = ", ".join(["(%s, %s, CURRENT_TIMESTAMP)"] * len(ids))
     add_query = f"INSERT INTO movies_recommendations (movie_id, user_id, created_at) VALUES {values_placeholders};"
     params = tuple(val for pair in zip(ids, [user_id] * len(ids)) for val in pair)
