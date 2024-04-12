@@ -66,7 +66,7 @@ def generate_movies_recommendations(user_id: int):
         user_interest = get_user_interest_df(df)
 
         # Use model to find similar users
-        ks_attempts = [5,10,15,20]
+        ks_attempts = [5,10,15,20,25,30,35,40,45,50]
 
         good_rated_movies = []
 
