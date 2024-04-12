@@ -133,7 +133,7 @@ async def search_resources(current_user: Annotated[UserInfo, Depends(get_current
 
     try:
         title = title.strip() if title.isspace() else title
-        resources = search_movie_by_title(title, page_size, offset)
+        resources = search_movie_by_title(current_user.user_id, title, page_size, offset)
         if not resources:
             return []
         return resources

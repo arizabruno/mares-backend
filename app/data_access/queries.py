@@ -49,11 +49,13 @@ def execute_query(query, params=None, fetch="all", commit=False):
         Database.return_connection(connection)
 
 
-def search_movie_by_title(title: str = "", page_size: int = 20, offset: int = 0) -> list:
+def search_movie_by_title(user_id: int | None = None, title: str = "", page_size: int = 20, offset: int = 0) -> list:
     """
-    Searches for movies by title in the database, using a case-insensitive search pattern.
+    Searches for movies by title in the database, using a case-insensitive search pattern, excluding movies
+    that are already marked as favorites by the specified user.
 
     Parameters:
+    - user_id (int): The user ID for whom to exclude favorite movies.
     - title (str): The search term for the movie title. The function searches for any titles that contain this term,
                    regardless of case.
     - page_size (int): The maximum number of movie records to return in one response. Default is 20.
@@ -65,19 +67,23 @@ def search_movie_by_title(title: str = "", page_size: int = 20, offset: int = 0)
     - list: A list of tuples representing the movie records that match the search criteria. Each tuple contains
             the complete details of a movie as stored in the `movies_details` table.
             The function returns an empty list if no matches are found or in case of an error.
-
-    Note:
-    - This function depends on the `execute_query` function for executing the SQL query. Ensure that the
-      `execute_query` function is correctly implemented and can handle the parameters and SQL query
-      construction as expected.
-    - The function assumes the existence of a table named `movies_details` in the database with
-      appropriate columns to store movie details.
     """
-    query = "SELECT DISTINCT * FROM movies_details WHERE LOWER(title) LIKE LOWER(%s) LIMIT %s OFFSET %s;"
 
-    params = (f'%{title}%', page_size, offset)
+    if user_id is None:
+        query = "SELECT DISTINCT * FROM movies_details WHERE LOWER(title) LIKE LOWER(%s) LIMIT %s OFFSET %s;"
+        params = (f'%{title}%', page_size, offset)
+    else:
+        query = """
+        SELECT DISTINCT md.* FROM movies_details md
+        LEFT JOIN movies_favorites mf ON md.movie_id = mf.movie_id AND mf.user_id = %s
+        WHERE LOWER(md.title) LIKE LOWER(%s) AND mf.movie_id IS NULL
+        ORDER BY md.movie_id ASC
+        LIMIT %s OFFSET %s;
+        """
+        params = (user_id, f'%{title}%', page_size, offset)
 
     return execute_query(query, params=params)
+
 
 
 def add_favorite_movie(movie_id: int, user_id: int):
