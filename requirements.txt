@@ -61,10 +61,11 @@ prompt-toolkit==3.0.43
 protobuf==4.25.3
 psutil==5.9.8
 psycopg2==2.9.9
+psycopg2-binary==2.9.9
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pyarrow==15.0.1
-pyasn1==0.6.0
+pyasn1==0.5.1
 pyasn1-modules==0.3.0
 pycparser==2.21
 pydantic==2.6.4

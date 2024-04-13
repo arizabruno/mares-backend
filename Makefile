@@ -8,7 +8,11 @@ run_api:
 	uvicorn app.main:app --port 8080 --host 0.0.0.0  --reload
 
 docker_build:
-	docker build -f docker/Dockerfile --tag=mares-api:dev .
+	docker build --tag=mares-api:dev .
 
 docker_run:
-	docker run -it -e PORT=8080 -p 8080:8080 mares-api:dev
+	docker run -it -e PORT=8080 -p 8080:8080 --name mares-api-container mares-api:dev
+
+docker_clean:
+	docker rm mares-api-container
+	docker rmi mares-api:dev
