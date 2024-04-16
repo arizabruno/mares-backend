@@ -32,6 +32,15 @@ def execute_query(query, params=None, fetch="all", commit=False):
     try:
         with connection.cursor() as cursor:
             cursor.execute(query, params)
+            if fetch == "one" and commit:
+                connection.commit()
+                rows = [cursor.fetchone()]
+                print(rows)
+                if not rows or rows[0] is None:  # Check if no data was fetched or fetchone() found no rows
+                    return []  # Return an empty list
+                col_names = [desc[0] for desc in cursor.description]
+                df = pd.DataFrame(rows, columns=col_names)
+                return df.to_dict('records')
             if commit:
                 connection.commit()
                 return True
@@ -379,6 +388,18 @@ def delete_all_movies_recommendations(user_id: int):
     params = (user_id,)
 
     return execute_query(query, params=params, commit=True)
+
+def create_guest_user():
+    """
+    Adds a new guest user to the database.
+
+    Returns:
+        Union[dict, None]: The newly created user's data, or None if an error occurred.
+    """
+    query = """
+    INSERT INTO users (username) VALUES ('guest') RETURNING user_id, username, email;
+    """
+    return execute_query(query, fetch='one', commit=True)[0]
 
 def create_user(email: str, username: str, password: str):
     """

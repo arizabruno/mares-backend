@@ -44,3 +44,19 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"user":{"id":user.user_id, "username":user.username, "email":user.email}}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
+
+@router.post("/guest", response_description="Create a new guest user", response_model=Token)
+async def login_as_guest():
+    """
+    Genrate a guest token.
+    """
+
+    guest_user  = create_guest_user()
+    if not guest_user:
+        raise HTTPException(status_code=400, detail="User could not be created.")
+
+    guest_user = UserInfo(**guest_user)
+    access_token_expires =  timedelta(days=1)
+    access_token = create_access_token(data={"user":{"id":guest_user.user_id, "username":guest_user.username, "email":guest_user.email}}, expires_delta=access_token_expires)
+
+    return Token(access_token=access_token, token_type="bearer")

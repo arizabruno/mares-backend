@@ -19,6 +19,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+
 @router.post("/", response_description="Create a new user", response_model=bool)
 async def create_user_endpoint(user: UserCreate):
     """
