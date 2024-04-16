@@ -255,3 +255,26 @@ async def read_favorite_movies(current_user: Annotated[UserInfo, Depends(get_cur
     movies = get_all_favorites_movies_by_user(current_user.user_id, title, page_size, offset)
 
     return movies
+
+
+# Get movies soundtracks from table movies_soundtracks based on movie id
+@router.get("/favorite_movies_soundtracks/", response_model=List[SongFromMovie])
+async def get_movie_soundtracks(current_user: Annotated[UserInfo, Depends(get_current_user)]):
+    """
+    Retrieves all soundtracks songs from the user favorite movies
+
+    Parameters:
+    - current_user (Annotated[str, Depends(get_current_user)]): The current user extracted from the request JWT.
+
+    Returns:
+    - A list of SongFromMovie models representing the soundtracks for the movies.
+
+    Raises:
+    - HTTPException: If the operation fails.
+    """
+
+    current_user = UserInfo(**current_user)
+    print("uid",current_user.user_id)
+    soundtracks = get_songs_from_favorite_movies(current_user.user_id)
+
+    return soundtracks

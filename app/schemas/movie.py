@@ -34,3 +34,12 @@ class MovieDetails(BaseModel):
     popularity_score: float | None
     tmdb_id: int | None
     imdb_id: int | None
+
+class SongFromMovie(BaseModel):
+    song_id: int
+    song_title: str | None
+    artist_name: str | None
+    spotify_id: str | None
+    movie_id: int
+    movie_title: str | None
+    movie_image_path: str | None

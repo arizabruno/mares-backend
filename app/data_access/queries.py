@@ -504,3 +504,17 @@ def read_user_by_email(email: str):
     query = "SELECT user_id, email, username, hashed_password FROM users WHERE email = %s"
     params = (email,)
     return execute_query(query, params=params, fetch="one")[0]
+
+# get_songs_from_favorite_movies
+def get_songs_from_favorite_movies(user_id: int):
+
+    query = """
+        SELECT songs.*, md.title, md.image_path as movie_image_path
+        FROM movies_soundtracks as songs
+        INNER JOIN movies_details md on songs.movie_id = md.movie_id
+        INNER JOIN movies_favorites as favorites ON favorites.movie_id = songs.movie_id
+        WHERE favorites.user_id = %s;
+    """
+    params = (user_id,)
+
+    return execute_query(query, params, commit=False)
