@@ -1,84 +1,48 @@
 
-# Mares API
+# MARES
 
-Welcome to the Mares API, a cutting-edge recommendation system designed to provide personalized suggestions to users. This document outlines how to set up and run the API locally, using Docker, and deploy it to AWS.
+The deployed application can be found [here.](https://mares.vercel.app)
 
-## Requirements
-- Python 3.10.6 or higher
-- pip
-- Docker
-- Terraform
-- AWS Account ()
-- AWS CLI
+This repository contains the application's backend code. The frontend project can be found at:
+- [mares-frontend](https://github.com/arizabruno/mares-frontend)
 
-## Setup Instructions
 
-### 1. Install Dependencies
+## Intro
 
-To install necessary Python packages, run:
+The Mares Recommender System is a tool designed for personalizing movie recommendations. It integrates a multidimensional analytical approach to cater to individual viewer preferences.
 
-```bash
-make install
-```
+## Context
 
-This command updates pip and installs dependencies listed in `requirements.txt`.
+The genesis of movie recommendation systems can be traced back to the challenge of navigating an ever-growing repository of cinematic content. With the digital revolution and the advent of streaming services, viewers have been inundated with a plethora of choices. The necessity to filter through this vast sea of content gave birth to the first generation of recommendation systems. As these systems evolved, the complexity of viewer preferences necessitated a more refined approach to recommendation, leading to the development of systems like Mares.
 
-### 2. Running the API Locally
+## How it works?
 
-To start the API server on your local machine, run:
+### Step 1: Vectorization of User Preferences
 
-```bash
-make run_api
-```
+The Mares system begins by converting each of a user's selected favorite movies into comprehensive vectors. These vectors encapsulate a broad spectrum of cinematic attributes, ranging from easily observable features like genre and narrative style to more nuanced characteristics such as thematic elements and directorial nuances. This conversion ensures a rich, multi-dimensional representation of each film, providing a deep insight into the user's cinematic tastes.
 
-This will launch the API at `http://0.0.0.0:8080`. The `--reload` flag enables hot reloading, allowing you to see changes in real-time without restarting the server.
+### Step 2: Synthesis of the User Interest Vector
 
-### 3. Docker Setup
+Next, the system averages these movie vectors to generate a single 'User Interest Vector'. This vector represents a condensed profile of the user’s preferences, synthesizing their interactions with various film titles into a unified form that can be efficiently analyzed. The vector embodies a holistic view of the user's preferences across multiple cinematic dimensions.
 
-#### Building the Docker Image
+### Step 3: Comparative Analysis via KNN Algorithm
 
-To build a Docker image for the Mares API, run:
+Utilizing the K-nearest neighbors (KNN) algorithm, the Mares system matches the 'User Interest Vector' against a pre-existing database. This database is not just a collection but a structured archive of pre-processed 'User Interest Vectors' for over 160,000 users who have contributed to more than 25 million reviews. Each vector in the database represents the comprehensive cinematic preferences of a user, pre-computed and stored across more than 30 dimensions for accurate matching.
 
-```bash
-make docker_build
-```
+### Step 4: Recommendation Generation
 
-#### Running the Docker Container
+Using the insights gained from the KNN analysis, the system identifies clusters of users whose interests closely align with those of the current user. From this group, the system curates a list of movies that have been highly rated by these similar users. This ensures that the recommendations are personalized, aligning closely with the individual's specific tastes and preferences of similar viewers.
 
-After building the image, start the container with:
 
-```bash
-make docker_run
-```
+### Simplified Example
 
-This command runs the API inside a Docker container, mapping the container's port 8080 to port 8080 on your host.
+<br/>
+<br/>
 
-### 4. Deploying to AWS
+![MARES Diagram](mares-diagram.png)
 
-#### 1. Inititalizing Terraform
+<br/>
+<br/>
 
-```bash
-make init_cloud_infra
-```
 
-#### 2. Upload container to Registry
-
-```bash
-make upload_container_to_registry
-```
-
-#### 3. Deploying container
-
-```bash
-make apply_cloud_infra
-```
-
-#### 4. Destroying resources
-
-```bash
-make detroy_cloud_infra
-```
-
-## License
-
-Specify your license here or indicate if the software is open-source.
+The diagram provided is a simplified representation of the process, showcasing it in just two dimensions for clarity and ease of understanding. However, in practice, the Mares system operates in a high-dimensional space, utilizing over 30 dimensions to ensure nuanced and precise personalization.
