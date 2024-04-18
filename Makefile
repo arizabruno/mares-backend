@@ -17,7 +17,7 @@ docker_clean:
 	docker rm mares-api-container
 	docker rmi mares-api:dev
 
-upload_container_to_aws_ecr:
+upload_container_to_registry:
 	./upload_to_registry.sh
 
 init_cloud_infra:
