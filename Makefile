@@ -16,3 +16,15 @@ docker_run:
 docker_clean:
 	docker rm mares-api-container
 	docker rmi mares-api:dev
+
+upload_container_to_aws_ecr:
+	./upload_to_registry.sh
+
+init_cloud_infra:
+	cd terraform && terraform init
+
+apply_cloud_infra:
+	cd terraform && terraform apply
+
+destroy_cloud_infra:
+	cd terraform && terraform destroy

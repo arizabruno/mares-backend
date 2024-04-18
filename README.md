@@ -1,15 +1,15 @@
 
 # Mares API
 
-Welcome to the Mares API, a cutting-edge recommendation system designed to provide personalized suggestions to users. This document outlines how to set up and run the API locally, using Docker, and deploy it to Google Cloud Platform (GCP).
+Welcome to the Mares API, a cutting-edge recommendation system designed to provide personalized suggestions to users. This document outlines how to set up and run the API locally, using Docker, and deploy it to AWS.
 
 ## Requirements
-
-Ensure you have the following installed on your system:
 - Python 3.10.6 or higher
 - pip
 - Docker
-- gcloud (for GCP deployment)
+- Terraform
+- AWS Account ()
+- AWS CLI
 
 ## Setup Instructions
 
@@ -53,31 +53,32 @@ make docker_run
 
 This command runs the API inside a Docker container, mapping the container's port 8080 to port 8080 on your host.
 
-### 4. Deploying to Google Cloud Platform (GCP)
+### 4. Deploying to AWS
 
-#### Deploying the Service
-
-To deploy the API to GCP, run:
+#### 1. Inititalizing Terraform
 
 ```bash
-make gcp_deploy
+make init_cloud_infra
 ```
 
-Ensure you have configured your `gcloud` CLI with appropriate permissions and settings before running this command.
-
-#### Deleting the Service
-
-To remove the deployed service from GCP, run:
+#### 2. Upload container to Registry
 
 ```bash
-make gcp_delete
+make upload_container_to_registry
 ```
 
-## Usage
+#### 3. Deploying container
 
-After starting the API, visit `http://localhost:8080/docs` to view the interactive API documentation and test endpoints.
+```bash
+make apply_cloud_infra
+```
+
+#### 4. Destroying resources
+
+```bash
+make detroy_cloud_infra
+```
 
 ## License
 
 Specify your license here or indicate if the software is open-source.
-
