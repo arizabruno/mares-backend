@@ -17,6 +17,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 # Application Initialization
 app = FastAPI()
 
+version = "v0.9"
+
 @app.get("/")
 async def main():
     """
@@ -46,12 +48,12 @@ app.include_router(
 app.include_router(
     v1_users_routes.router,
     prefix="/api/v1/users",
-    tags=["v1", "users"]
+    tags=[version, "users"]
 )
 
 
 app.include_router(
     v1_movies_routes.router,
     prefix="/api/v1/movies",
-    tags=["v1", "movies"]
+    tags=[version, "movies"]
 )

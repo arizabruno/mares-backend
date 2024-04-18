@@ -274,7 +274,6 @@ async def get_movie_soundtracks(current_user: Annotated[UserInfo, Depends(get_cu
     """
 
     current_user = UserInfo(**current_user)
-    print("uid",current_user.user_id)
     soundtracks = get_songs_from_favorite_movies(current_user.user_id)
 
     return soundtracks
