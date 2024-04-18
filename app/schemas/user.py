@@ -37,12 +37,14 @@ class UserInfo(BaseModel):
         user_id (int): The user's id.
         username (str): The user's username. Unique across all users.
         email (EmailStr): The user's email address. Must be a valid email format.
+        is_guest (bool): A flag indicating whether the user is a guest user.
     """
     user_id: int
     username: str
     email: EmailStr
+    is_guest: bool
 
-    
+
 class User(BaseModel):
     """
     Schema representing a user entity.
@@ -53,8 +55,10 @@ class User(BaseModel):
         hashed_password (Optional[str]): The user's hashed password. Defaults to None.
             This field is optional to accommodate scenarios where user data is returned without exposing password information.
         email (EmailStr): The user's email address. Must be a valid email format.
+        is_guest (bool): A flag indicating whether the user is a guest user.
     """
     user_id: int
     username: str
-    hashed_password: str 
+    hashed_password: str
     email: EmailStr
+    is_guest: bool

@@ -41,7 +41,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     access_token_expires =  timedelta(days=1)
     access_token = create_access_token(
-        data={"user":{"id":user.user_id, "username":user.username, "email":user.email}}, expires_delta=access_token_expires
+        data={"user":{"id":user.user_id, "username":user.username, "email":user.email, "is_guest":user.is_guest}}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -57,6 +57,6 @@ async def login_as_guest():
 
     guest_user = UserInfo(**guest_user)
     access_token_expires =  timedelta(days=1)
-    access_token = create_access_token(data={"user":{"id":guest_user.user_id, "username":guest_user.username, "email":guest_user.email}}, expires_delta=access_token_expires)
+    access_token = create_access_token(data={"user":{"id":guest_user.user_id, "username":guest_user.username, "email":guest_user.email, "is_guest": guest_user.is_guest}}, expires_delta=access_token_expires)
 
     return Token(access_token=access_token, token_type="bearer")

@@ -397,7 +397,7 @@ def create_guest_user():
         Union[dict, None]: The newly created user's data, or None if an error occurred.
     """
     query = """
-    INSERT INTO users (username) VALUES ('guest') RETURNING user_id, username, email;
+    INSERT INTO users (username, is_guest) VALUES ('guest', true) RETURNING user_id, username, email, is_guest;
     """
     return execute_query(query, fetch='one', commit=True)[0]
 
@@ -442,7 +442,7 @@ def read_user_by_id(user_id: int):
     Returns:
     - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
     """
-    query = "SELECT user_id, email, username FROM users WHERE user_id = %s"
+    query = "SELECT user_id, email, username, is_guest FROM users WHERE user_id = %s"
     params = (user_id,)
     return execute_query(query, params=params, fetch="one")[0]
 
@@ -508,7 +508,7 @@ def read_user_by_username(username: str):
     Returns:
     - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
     """
-    query = "SELECT user_id, email, username, hashed_password FROM users WHERE username = %s"
+    query = "SELECT user_id, email, username, hashed_password, is_guest FROM users WHERE username = %s"
     params = (username,)
     return execute_query(query, params=params, fetch="one")[0]
 
@@ -522,7 +522,7 @@ def read_user_by_email(email: str):
     Returns:
     - A list containing a single dictionary representing the user, or an empty list if no user was found. Sensitive information like hashed passwords is not included.
     """
-    query = "SELECT user_id, email, username, hashed_password FROM users WHERE email = %s"
+    query = "SELECT user_id, email, username, hashed_password, is_guest FROM users WHERE email = %s"
     params = (email,)
     return execute_query(query, params=params, fetch="one")[0]
 

@@ -33,6 +33,20 @@ def get_user(username: str) -> Optional[User]:
         return None
     return User(**user)
 
+def get_user_by_id(user_id: int) -> Optional[User]:
+    """
+    Retrieve a user entity based on the username.
+
+    Args:
+        user_id (int): The id of the user to retrieve.
+
+    Returns:
+        Optional[User]: The user object if found, None otherwise.
+    """
+    user = read_user_by_id(user_id)
+    if "error" in user:
+        return None
+    return User(**user)
 
 def authenticate_user(username: str, password: str) -> Optional[UserInfo]:
     """
@@ -50,6 +64,22 @@ def authenticate_user(username: str, password: str) -> Optional[UserInfo]:
     if not user or not verify_password(password, user.hashed_password):
         return False
     return user
+
+def authenticate_guest_user(guest_id) -> Optional[UserInfo]:
+    """
+    Authenticate a guest user by verifying their guest_id.
+
+    Args:
+        guest_id (str): The guest_id of the user to authenticate.
+
+    Returns:
+        Optional[UserInfo]: The authenticated user object if authentication is successful, False otherwise.
+    """
+    user = get_user_by_id(guest_id)
+    if not user:
+        return False
+    return user
+
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -109,15 +139,20 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        id = payload.get("user")["id"]
         username: str = payload.get("user")["username"]
-        if username is None:
+        is_guest: bool = payload.get("user")["is_guest"]
+        if id is None or username is None or is_guest is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(id=id, username=username, is_guest=is_guest)
     except JWTError as error:
         print("JWT Error",error)
         raise credentials_exception
 
-    user = read_user_by_username(token_data.username)
+    if token_data.is_guest:
+        user = read_user_by_id(token_data.id)
+    else:
+        user = read_user_by_username(token_data.username)
 
     if user is None:
         raise credentials_exception
