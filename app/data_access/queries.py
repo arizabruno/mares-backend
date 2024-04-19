@@ -35,7 +35,6 @@ def execute_query(query, params=None, fetch="all", commit=False):
             if fetch == "one" and commit:
                 connection.commit()
                 rows = [cursor.fetchone()]
-                print(rows)
                 if not rows or rows[0] is None:  # Check if no data was fetched or fetchone() found no rows
                     return []  # Return an empty list
                 col_names = [desc[0] for desc in cursor.description]
@@ -389,17 +388,20 @@ def delete_all_movies_recommendations(user_id: int):
 
     return execute_query(query, params=params, commit=True)
 
-def create_guest_user():
+def create_guest_user(username:str = 'guest', password:str = 'secret', email:str = 'guest@example.com'):
     """
     Adds a new guest user to the database.
 
     Returns:
         Union[dict, None]: The newly created user's data, or None if an error occurred.
     """
+    hashed_password = get_password_hash(password)
     query = """
-    INSERT INTO users (username, is_guest) VALUES ('guest', true) RETURNING user_id, username, email, is_guest;
+    INSERT INTO users (username, hashed_password, email, is_guest) VALUES (%s, %s, %s, true) RETURNING user_id, username, email, is_guest;
     """
-    return execute_query(query, fetch='one', commit=True)[0]
+
+    params = (username, hashed_password, email)
+    return execute_query(query, params=params, fetch='one', commit=True)[0]
 
 def create_user(email: str, username: str, password: str):
     """
@@ -456,7 +458,6 @@ def update_user_info(user_id: int, new_email: str = None, new_username: str = No
     - new_email (str, optional): The new email address to update.
     - new_username (str, optional): The new username to update.
     - new_passowrd (str, optional): The new password to update.
-
     Returns:
     - The result of the `execute_query` function, which could be True if the operation was successful and the transaction was committed, or None if an error occurred.
     """
@@ -474,8 +475,12 @@ def update_user_info(user_id: int, new_email: str = None, new_username: str = No
         updates.append("hashed_password = %s")
         params.append(new_hashed_password)
 
+
     if not updates:
         return None  # No updates to make
+
+    updates.append("is_guest = %s")
+    params.append(False)
 
     params.append(user_id)  # For the WHERE clause
     query = "UPDATE users SET " + ", ".join(updates) + " WHERE user_id = %s"

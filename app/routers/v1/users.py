@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import BackgroundTasks, Depends, APIRouter, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from app.auth.logic import create_access_token, get_current_user
+from app.auth.logic import create_access_token, get_current_user, update_user
 from app.schemas.user import *
 from app.schemas.movie import *
 from app.data_access.queries import *
@@ -77,16 +77,12 @@ async def update_user_info_endpoint(current_user: Annotated[UserInfo, Depends(ge
     - HTTPException: If the operation fails.
     """
     current_user = UserInfo(**current_user)
+    updated_token = update_user(current_user.user_id, user.email or current_user.email, user.username or current_user.username, user.password, current_user.is_guest)
 
-    success = update_user_info(current_user.user_id, user.email, user.username, user.password)
-    if not success:
+    if not updated_token:
         raise HTTPException(status_code=400, detail="User update failed.")
 
-    access_token_expires =  timedelta(days=1)
-    access_token = create_access_token(
-        data={"user":{"id":current_user.user_id, "username":user.username, "email":user.email}}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=updated_token, token_type="bearer")
 
 @router.delete("/{user_id}", response_description="Delete a user", response_model=bool)
 async def delete_user_endpoint(token: Annotated[str, Depends(oauth2_scheme)], user_id: int):

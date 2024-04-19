@@ -157,3 +157,36 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     if user is None:
         raise credentials_exception
     return user
+
+
+
+def update_user(user_id: int, email: str, username: str, password: str, is_guest:bool) -> Optional[str]:
+    """
+    Update a user's information in the database.
+
+    Args:
+        user_id (int): The user's id.
+        email (str): The user's email.
+        username (str): The user's username.
+        password (str): The user's password.
+        is_guest (bool): The user's guest status.
+
+    Returns:
+        str: A new access_token if the user's information was updated successfully, None otherwise.
+    """
+
+
+    if is_guest:
+        if not password:
+            return False
+
+    success = update_user_info(user_id, email, username, password)
+    if not success:
+        return None
+
+    access_token_expires =  timedelta(days=1)
+    access_token = create_access_token(
+        data={"user":{"id":user_id, "username":username, "email":email, "is_guest":False}}, expires_delta=access_token_expires
+    )
+
+    return access_token
