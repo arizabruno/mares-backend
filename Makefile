@@ -20,11 +20,21 @@ docker_clean:
 upload_container_to_registry:
 	./upload_to_registry.sh
 
-init_cloud_infra:
-	cd terraform && terraform init
+init_api_infra:
+	cd terraform/api && terraform init
 
-apply_cloud_infra:
-	cd terraform && terraform apply
+apply_api_infra:
+	cd terraform/api && terraform apply
 
-destroy_cloud_infra:
-	cd terraform && terraform destroy
+destroy_api_infra:
+	cd terraform/api && terraform destroy
+
+
+init_db_infra:
+	cd terraform/db && terraform init
+
+apply_db_infra:
+	cd terraform/db && terraform apply
+
+destroy_db_infra:
+	cd terraform/db && terraform destroy
