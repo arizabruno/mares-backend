@@ -1,8 +1,6 @@
 
 # MARES
 
-The deployed application can be found [here.](https://mares.vercel.app)
-
 This repository contains the application's backend code. The frontend project can be found at:
 - [mares-frontend](https://github.com/arizabruno/mares-frontend)
 
